@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AsyncServer/AsyncServer.csproj" Id="857ae4f9-b9d7-4a57-bb24-be15ce8ddd93" />
+  <Project Path="ClientSocket/ClientSocket.csproj" />
+</Solution>

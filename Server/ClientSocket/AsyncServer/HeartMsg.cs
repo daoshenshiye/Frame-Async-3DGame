@@ -1,0 +1,27 @@
+using System.Collections;
+using System.Collections.Generic;
+
+
+public class HeartMsg : BaseMsg
+{
+    public override int GetBytesNum()
+    {
+        return 8;
+    }
+    public override int Reading(byte[] bytes, int beginIndex = 0)
+    {
+        return base.Reading(bytes, beginIndex);
+    }
+    public override byte[] Writting()
+    {
+        int index = 0;
+        byte[] bytes = new byte[8];
+        WriteInt(bytes,GetID(),ref index);
+        WriteInt(bytes,0,ref index);
+        return bytes;
+    }
+    public override int GetID()
+    {
+        return 505;
+    }
+}

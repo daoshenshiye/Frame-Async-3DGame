@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<messages>
+	<Data name="InputData" namespace="GamePlayer">
+		<field access="public" type="int" name="playerId" />
+		<field access="public" type="float" name="Vertical" />
+		<field access="public" type="float" name="Horizontal" />
+		<field access="public" type="bool" name="Jump" />
+	</Data>
+	<Data name="PlayerStateData" namespace="GamePlayer">
+		<field access="public" type="int" name="hp" />
+		<field access="public" type="PlayerPosData" name="playerPos" />
+	</Data>
+	<Data name="PlayerPosData" namespace="GamePlayer" >
+		<field access="public" type="float" name="x" />
+		<field access="public" type="float" name="y" />
+		<field access="public" type="float" name="z" />
+	</Data>
+	<Data name="ServerInputAndStateData" namespace="GamePlayer" >
+		<field access="public" type="int" name="playerId" />
+		<field access="public" type="InputData" name="inputdata" />
+		<field access="public" type="PlayerStateData" name="playerstate" />
+	</Data>
+
+	<message id="307" name="RoomCreateMsg" namespace="GamePlayer" >
+		<field access="public" type="int" name="roomId" />
+		<field access="public" type="int" name="playerId" />
+		<field access="public" type="bool" name="success" />
+	</message>
+	
+	<message id="305" name="PlayerEnterRoomMsg" namespace="GamePlayer" >
+			<field access="public" type="int" name="playerId" />
+			<field access="public" type="int" name="roomId" />
+			<field access="public" type="bool" name="success" />
+	</message>
+	<message id="306" name="PlayerExitRoomMsg" namespace="GamePlayer" >
+			<field access="public" type="int" name="playerId" />
+			<field access="public" type="int" name="roomId" />
+			<field access="public" type="bool" name="success" />
+	</message>
+	<message id="202" name="QuitMessage" namespace="GameSystem" >	
+	</message>
+	<message id="140" name="InputMessage" namespace="GameMessage">
+		<field access="public" type="int" name="PlayerId" />
+		<field access="public" type="InputData" name="input" />
+	</message>
+	<message id="505" name="HeartMsg" namespace="GameSystem" />
+	<message id="404" name="UdpAckMsg" namespace="GameSystem">
+		<field access="public" type="long" name="seq"/>
+	</message>
+	<message id="450" name="PlayerAccessInfoMsg" namespace="GameMessage">
+		<field access="public" type="int" name="PlayerId" />
+		<field access="public" type="string" name="PlayerNickName" />
+		<field access="public" type="string" name="username" />
+		<field access="public" type="string" name="password" />
+	</message>
+	<message id="466" name="UdpPlayerAddMsg" namespace="GameMessage" >
+		<field access="public" type="int" name="playerId" />
+		
+		<field access="public" type="PlayerStateData" name="playerstate" />
+	</message>
+	<message id="451" name="PlayerCharacterCreateMsg" namespace="GameMessage">
+			<field access="public" type="int" name="PlayerId" />
+	</message>
+	<message id="452" name="PlayerCharacterDestroyMsg" namespace="GameMessage">
+			<field access="public" type="int" name="PlayerId" />
+	</message>
+	<message id="453" name="UDPConnectionBuildMsg" namespace="GameSystem" />
+	<message id="205" name="TCPConnectionBuildMsg" namespace="GameSystem" />
+	<message id="101" name="ServerFrameAuthenMsg" namespace="GameSystem" >
+		<field access="public" type="long" name="serLogicFrame" />
+		<field access="public" type="list" T="ServerInputAndStateData" name="ServerInputStateData" />
+	</message>
+</messages>
