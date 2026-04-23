@@ -10,6 +10,7 @@ namespace ClientSocket.UDP
     {
         SIMPLE,
         ORDER_STEADY
+        
     }
     public class UDPClient
     {
