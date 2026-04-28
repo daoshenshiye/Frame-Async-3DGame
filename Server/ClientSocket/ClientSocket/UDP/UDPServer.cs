@@ -43,7 +43,7 @@ namespace ClientSocket.UDP
         public Dictionary<long,List<string>> needDeleteDic=new Dictionary<long, List<string>>();
         private List<AckSendPackage> needSendList=new List<AckSendPackage>();
         public int Counter=0;
-       
+        private byte[] buffer = new byte[8192];
 
 
         public UDPServer(string ip, int port)
@@ -61,15 +61,15 @@ namespace ClientSocket.UDP
         {
                 try
                 {
-                byte[] buffer = new byte[8192];
+                
                 EndPoint ipEndPoint = new IPEndPoint(IPAddress.Any, 0);
                 socket.BeginReceiveFrom(buffer,
                             0,
                             buffer.Length,
                             SocketFlags.None, 
                             ref ipEndPoint,
-                            new AsyncCallback(ReceiveCallBack),
-                            buffer);
+                            ReceiveCallBack,
+                            ipEndPoint);
                         //try { Console.WriteLine($"UDPServer.Receive: packet from {(ipEndPoint as IPEndPoint).Address}:{(ipEndPoint as IPEndPoint).Port} length={Length} at {DateTime.Now:O}"); } catch { }
                    
                 }
@@ -83,18 +83,18 @@ namespace ClientSocket.UDP
         private void ReceiveCallBack(IAsyncResult ar)
         {
             try {
-                EndPoint remote = new IPEndPoint(IPAddress.Any, 0);
-                byte[] buffer = (byte[])ar.AsyncState;
-                int length = socket.EndReceiveFrom(ar, ref remote);
-                byte[] data = new byte[length];
-                Buffer.BlockCopy(buffer, 0, data, 0, length);
+                
+                EndPoint ipEnd = (EndPoint)ar.AsyncState;
+                int length = socket.EndReceiveFrom(ar, ref ipEnd);
+               
+                
                 if (length > 0)
                 {
-                    string key = (remote as IPEndPoint).Address.ToString() + "," + (remote as IPEndPoint).Port.ToString();
+                    string key = (ipEnd as IPEndPoint).Address.ToString() + "," + (ipEnd as IPEndPoint).Port.ToString();
                     
                     if (UDP_Client_Dic.ContainsKey(key))
                     {
-                        UDP_Client_Dic[key].ReceiveMsg(data, length);
+                        UDP_Client_Dic[key].ReceiveMsg(buffer, length);
 
                     }
                     else
@@ -103,18 +103,29 @@ namespace ClientSocket.UDP
 
                         UDP_Client_Dic.Add(key, new UDPClient(key));
                         
-                        UDP_Client_Dic[key].ReceiveMsg(data, length);
+                        UDP_Client_Dic[key].ReceiveMsg(buffer, length);
                         //try { Console.WriteLine($"UDPServer.Receive: new client {key} created at {DateTime.Now:O}"); } catch { }
                     }
                 }
             }
             catch (Exception e){
+                
             Console.WriteLine(e.Message);
                 Console.WriteLine(e.StackTrace);
             }
             finally {
-                Receive(); 
+                    EndPoint ipEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                socket.BeginReceiveFrom(buffer,
+                    0,
+                    buffer.Length,
+                    SocketFlags.None, 
+                    ref ipEndPoint,
+                    ReceiveCallBack,
+                    ipEndPoint);
+                //try { Console.WriteLine($"UDPServer.Receive: packet from {(ipEndPoint as IPEndPoint).Address}:{(ipEndPoint as IPEndPoint).Port} length={Length} at {DateTime.Now:O}"); } catch { }
+                   
             }
+            
         }
         public void DoProcess(object obj)
         {
@@ -299,32 +310,7 @@ namespace ClientSocket.UDP
                     result.HandlerDo();
                 }
             }
-
-                //foreach (var item in playerInputsQ_Dic)
-                //{
-                //    try
-                //    {
-                //    // Always try to dequeue and handle input handlers from the per-player queue.
-                //    // Previously this was gated by whether frameManager.playerInputs contained the key,
-                //    // which could cause handlers to be left in the queue and introduce delays.
-                //    int process = 0;
-                //        while (process<5&&item.Value.TryDequeue(out BaseHandler handler))
-                //        {
-                //            if (handler != null)
-                //            {
-                //                // High-frequency logging disabled to reduce IO contention.
-                //                // Console.WriteLine($"DoReceive: dequeued handler for player {item.Key} at {DateTime.Now:O}");
-                //                handler.HandlerDo();
-                //            }
-                //            ++process;
-                //        }
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        Console.WriteLine($"DoReceive: exception processing player {item.Key}: {ex.Message}");
-                //        Console.WriteLine(ex.StackTrace);
-                //    }
-                //}
+            
             
         }
         public  void SendMessage(BaseMsg baseMsg,IPEndPoint iPEnd,E_UDP_MSG_TYPE e_UDP_MSG_)

@@ -65,11 +65,10 @@ namespace ClientSocket.UDP
           
             if(bytes!=null&& receiveLegth>0)
             {
-                byte[] cacheBytes = new byte [receiveLegth];
-                Array.Copy(bytes, 0, cacheBytes, 0, receiveLegth);
+
                 //HandleMsg((cacheBytes,receiveLegth));
                 //ThreadPool.QueueUserWorkItem(HandleMsg, (cacheBytes, receiveLegth));
-                HandleMsg((cacheBytes, receiveLegth));
+                HandleMsg((bytes, receiveLegth));
             }
            
         }
@@ -84,9 +83,16 @@ namespace ClientSocket.UDP
             byte[] chacheBytes = info.bytes;
             chacheNum = info.len;
 
-            while (true)
-            {
-                int type = BitConverter.ToInt16(chacheBytes, nowIndex);
+            
+                int type = -1;
+                if (chacheBytes.Length>=sizeof(short))
+                {
+                    type = BitConverter.ToInt16(chacheBytes, nowIndex);
+                }
+                else
+                {
+                    return;
+                }
                 nowIndex += 2;
                 msgLength = -1;
                 if (chacheNum >= 18 && type == 1 || chacheNum >= 10 && type == 0)
@@ -96,17 +102,19 @@ namespace ClientSocket.UDP
                         nowSeq = BitConverter.ToInt64(chacheBytes, nowIndex);
                         nowIndex += 8;
                     }
-                    ID = BitConverter.ToInt32(chacheBytes,nowIndex);
+
+                    ID = BitConverter.ToInt32(chacheBytes, nowIndex);
                     nowIndex += 4;
                     msgLength = BitConverter.ToInt32(chacheBytes, nowIndex);
                     nowIndex += 4;
-                    
-                    if (chacheNum - nowIndex >= msgLength&&msgLength!=-1)
+
+                    if (chacheNum - nowIndex >= msgLength && msgLength != -1)
                     {
                         BaseMsg baseMsg = null;
                         baseMsg = MsgPool.Instance.GetMsg(ID);
 
-                        //else if(baseMsg is UdpAckMsg)
+                        #region  超时逻辑
+                              //else if(baseMsg is UdpAckMsg)
                         //{
                         //    //lock (MainClass.udpserver.AckDic)
                         //    //{
@@ -142,90 +150,85 @@ namespace ClientSocket.UDP
                         //    //}
 
                         //}
+                        
+
+                        #endregion
+                      
                         if (baseMsg != null)
                         {
-                            
-                                baseMsg.Reading(chacheBytes, nowIndex);
-                                BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
-                                baseHandler.msg = baseMsg;
-                                if (type == 0)
+
+                            baseMsg.Reading(chacheBytes, nowIndex);
+                            BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
+                            baseHandler.msg = baseMsg;
+                            if (type == 0)
+                            {
+                                if (baseHandler != null)
                                 {
-                                    if (baseHandler != null)
-                                    {
                                     preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
                                     if (baseHandler.msg is UdpPlayerAddMsg)
-                                        {
+                                    {
                                         UdpPlayerAddMsg udpAdd = baseHandler.msg as UdpPlayerAddMsg;
-                                            playerID = udpAdd.playerId;
+                                        playerID = udpAdd.playerId;
                                         playerStateData = udpAdd.playerstate;
-                                            Console.WriteLine("玩家成功加入UDP" + playerID);
+                                        Console.WriteLine("玩家成功加入UDP" + playerID);
                                         if (!MainClass.udpserver.ClientPID_TO_Addr_Dic.ContainsKey(playerID))
                                         {
                                             MainClass.udpserver.ClientPID_TO_Addr_Dic.Add(playerID, ipaddr);
                                         }
+
                                         UDPConnectionBuildMsg msg = new UDPConnectionBuildMsg();
-                                        MainClass.udpserver.SendMessage(msg, MainClass.udpserver.GetIPEndPointFromClientDic(ipaddr), E_UDP_MSG_TYPE.SIMPLE);
-                                           
+                                        MainClass.udpserver.SendMessage(msg,
+                                            MainClass.udpserver.GetIPEndPointFromClientDic(ipaddr),
+                                            E_UDP_MSG_TYPE.SIMPLE);
 
-                                        }
-                                        else if (baseHandler.msg is HeartMsg)
-                                        {
-                                            
-                                            preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
-                                            
-                                        }
-                                        else
-                                        {
-                                            MainClass.udpserver.simpleMsgQueue.Enqueue(baseHandler);
-                                        }
+
                                     }
-                                       
+                                    else if (baseHandler.msg is HeartMsg)
+                                    {
 
+                                        preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
 
+                                    }
+                                    else
+                                    {
+                                        MainClass.udpserver.simpleMsgQueue.Enqueue(baseHandler);
+                                    }
                                 }
-                                else if (type == 1)
-                                {
+
+
+
+                            }
+                            else if (type == 1)
+                            {
                                 preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
 
-                                            //MainClass.udpserver.Counter++;
-                                            //Console.WriteLine(MainClass.udpserver.Counter);
-                                            
-                                inputsDic.GetOrAdd(nowSeq, baseHandler);
-                                        //    try
-                                        //    {
-                                        //    Console.WriteLine($"UDPClient.HandleMsg: received seq {nowSeq} for player {playerID} at {DateTime.Now:O}");
-                                        //}
-                                        //    catch { }
+                                //MainClass.udpserver.Counter++;
+                                //Console.WriteLine(MainClass.udpserver.Counter);
 
-                                        // If this message contains a player id (e.g. InputMessage), update the server mapping
-                                        
-                                       
+                                inputsDic.GetOrAdd(nowSeq, baseHandler);
+                                //    try
+                                //    {
+                                //    Console.WriteLine($"UDPClient.HandleMsg: received seq {nowSeq} for player {playerID} at {DateTime.Now:O}");
+                                //}
+                                //    catch { }
+
+                                // If this message contains a player id (e.g. InputMessage), update the server mapping
+
+
                                 if (baseHandler.msg is GameMessage.InputMessage inputMsg)
                                 {
                                     MainClass.udpserver.ClientPID_TO_Addr_Dic[inputMsg.PlayerId] = ipaddr;
                                 }
-                                      
-                                        
-                                    
-                                }
-                        }
-                        nowIndex += msgLength;
-                        if (nowIndex >= chacheNum)
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
 
+
+
+                            }
+                        }
+
+                        nowIndex += msgLength;
+                    }
+
+                }
         }
 
     }

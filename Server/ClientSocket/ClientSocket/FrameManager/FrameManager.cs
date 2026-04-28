@@ -18,18 +18,19 @@ public class FrameManager
     public int FixedFrameRate =15;
     public float FixedDeltaTime= 0;
     private static long CurrentLogicFrame=1;
-   
+    private float accumulatedFrameTime=0;
     private bool shouldOpenLogic = false;
     //public Dictionary<int,BaseMsg> PlayerFrameInputs= new Dictionary<int, BaseMsg>();
     //public Dictionary<long, List<BaseMsg>> NetInputsDic = new Dictionary<long, List<BaseMsg>>();
     public System.Collections.Concurrent.ConcurrentDictionary<int, ConcurrentQueue<ServerInputAndStateData>> playerInputs =
         new System.Collections.Concurrent.ConcurrentDictionary<int, ConcurrentQueue<ServerInputAndStateData>>();
     private List<ServerInputAndStateData> inputs=new List<ServerInputAndStateData>();
-    private DateTime lastTime = DateTime.MinValue;
+    private DateTime lastTime=DateTime.Now;
     private float MoveSpeed = 2f;
     private int timespan = 1000 / 15;
-    public FrameManager()
+    public FrameManager(int fixedFrameRate)
     {
+        FixedFrameRate = fixedFrameRate;
         FixedDeltaTime = 1f / FixedFrameRate;
         shouldOpenLogic=true;
 
@@ -40,13 +41,67 @@ public class FrameManager
     {
         while (shouldOpenLogic)
         {
-            try
-            {
+            
+            
+            // 计算当前距离上一帧过了多久
+            var elapsedMs = (DateTime.Now - lastTime).TotalMilliseconds;
 
-                Thread.Sleep(timespan);
-                ServerFrameAuthenMsg serverLogicFrame = new ServerFrameAuthenMsg();
+  
+            if (elapsedMs < timespan)
+            {
+                // 休眠剩下的时间，不占CPU
+                int sleepMs = timespan - (int)elapsedMs;
+                if (sleepMs > 0)
+                    Thread.Sleep(sleepMs);
+
+                continue;
+            }
+            
+            lastTime = DateTime.Now;
+               
+                try{
+                    ServerFrameAuthenMsg serverLogicFrame = new ServerFrameAuthenMsg();
                     serverLogicFrame.serLogicFrame = ReadLogicFrame();
-                #region 补发帧逻辑
+                    foreach (var item in playerInputs)
+                    {
+                        var q = item.Value;
+                        if (q != null && q.TryDequeue(out ServerInputAndStateData serverInputAndState))
+                        {
+                            inputs.Add(CalcPlayerState(serverInputAndState));
+                        }
+                    }
+                    if (inputs.Count == 0)
+                    {
+                        serverLogicFrame.ServerInputStateData = new List<ServerInputAndStateData>();
+
+                    }
+                    else
+                    {
+
+                        serverLogicFrame.ServerInputStateData = inputs;
+                    }
+                    //foreach (var item in inputs)
+                    //{
+                    //    if (item.playerId==1)
+                    //    {
+                       
+                    //        ++MainClass.udpserver. Counter;
+                    //        Console.WriteLine(MainClass.udpserver.Counter);
+                    //    }
+                    
+                    //}
+                    MainClass.udpserver.BroadCastMsg(serverLogicFrame, E_UDP_MSG_TYPE.ORDER_STEADY);
+                    inputs.Clear();
+                    Interlocked.Increment(ref CurrentLogicFrame);
+                    lastTime = DateTime.Now;
+                
+                }
+                catch (Exception e) {
+            
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+                }
+                    #region 补发帧逻辑
                 //lock (MainClass.udpserver.UDP_Client_Dic)
                 //{
                 //    foreach (var item in MainClass.udpserver.UDP_Client_Dic)
@@ -91,47 +146,7 @@ public class FrameManager
                 //    }
                 //}
                 #endregion 
-                 foreach (var item in playerInputs)
-                    {
-                        var q = item.Value;
-                        if (q != null && q.TryDequeue(out ServerInputAndStateData serverInputAndState))
-                        {
-                            inputs.Add(CalcPlayerState(serverInputAndState));
-                        }
-                    }
-                    if (inputs.Count == 0)
-                    {
-                        serverLogicFrame.ServerInputStateData = new List<ServerInputAndStateData>();
-
-                    }
-                    else
-                    {
-
-                        serverLogicFrame.ServerInputStateData = inputs;
-                    }
-                //foreach (var item in inputs)
-                //{
-                //    if (item.playerId==1)
-                //    {
-                       
-                //        ++MainClass.udpserver. Counter;
-                //        Console.WriteLine(MainClass.udpserver.Counter);
-                //    }
-                    
-                //}
-                MainClass.udpserver.BroadCastMsg(serverLogicFrame, E_UDP_MSG_TYPE.ORDER_STEADY);
-                    inputs.Clear();
-                    Interlocked.Increment(ref CurrentLogicFrame);
-                    lastTime = DateTime.Now;
                 
-            }
-            catch (Exception e) {
-            
-            Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-            }
-            
-
         }
     }
     #region  方案2:帧号发送和输入发送分开

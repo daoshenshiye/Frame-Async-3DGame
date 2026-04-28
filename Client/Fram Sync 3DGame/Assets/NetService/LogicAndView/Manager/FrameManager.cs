@@ -67,11 +67,12 @@ public class FrameManager:MonoBehaviour
             TimeSpan elapsedtime = DateTime.Now - lastUpdateTime15FPS;
             if (lastUpdateTime15FPS == DateTime.MinValue || elapsedtime.TotalSeconds >= serverframeMs)
             {
-                
                 UpdateView();
                 SendInputMsgToServer();
                 lastUpdateTime15FPS = DateTime.Now;
+             
             }
+
         }
         
     }

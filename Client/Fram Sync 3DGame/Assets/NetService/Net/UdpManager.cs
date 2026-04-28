@@ -55,7 +55,7 @@ public class UdpManager: MonoBehaviour
     private long preLogicFrame =-1;
     private float timer;
     public int Counter;
-    
+    private byte[] bytes = new byte[8192];
     private void Awake()
     {
             instance = this;
@@ -168,26 +168,14 @@ public class UdpManager: MonoBehaviour
         
             while (shouldOpenUdp)
             {
-
-
-                    byte[] bytes = new byte[8192];
-
                     int Length = socket.ReceiveFrom(bytes, ref remoteEndPoint);
             if (Length>0)
             {
-                byte[] new_bytes = new byte[Length];
-                Array.Copy(bytes, 0, new_bytes, 0, Length);
-              
-                HandleReceive(Length, new_bytes);
-                
+
+                HandleReceive(Length, bytes);
             }
-                   
-                
+
             }
-        
-   
-       
-       
     }
 
     public void HandleReceive(int receiveLength, byte[] bytes)
@@ -201,9 +189,17 @@ public class UdpManager: MonoBehaviour
         byte[] chacheBytes = bytes;
         chacheNum = receiveLength;
 
-        while (true)
-        {
-            int type = BitConverter.ToInt16(chacheBytes, nowIndex);
+ 
+            int type = -1;
+            if (chacheBytes.Length>=sizeof(short))
+            {
+                type = BitConverter.ToInt16(chacheBytes, nowIndex);
+            }
+            else
+            {
+                return;
+            }
+           
             nowIndex += 2;
             msgLength = -1;
             if (chacheNum >= 18 && type == 1 || chacheNum >= 10 && type == 0)
@@ -213,15 +209,16 @@ public class UdpManager: MonoBehaviour
                     nowSeq = BitConverter.ToInt64(chacheBytes, nowIndex);
                     nowIndex += 8;
                 }
+
                 ID = BitConverter.ToInt32(chacheBytes, nowIndex);
                 nowIndex += 4;
                 msgLength = BitConverter.ToInt32(chacheBytes, nowIndex);
                 nowIndex += 4;
-                if(msgLength>=63)
+                if (msgLength >= 63)
                 {
                     System.Diagnostics.Debugger.Break();
                 }
-                
+
                 //print("ID:" + ID + "len" + msgLength+"nowSeq"+nowSeq);
                 if (chacheNum - nowIndex >= msgLength && msgLength != -1)
                 {
@@ -229,7 +226,7 @@ public class UdpManager: MonoBehaviour
                     baseMsg = MsgPool.Instance.GetMsg(ID);
                     if (baseMsg != null)
                     {
-                        
+
                         baseMsg.Reading(chacheBytes, nowIndex);
                         BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
                         baseHandler.msg = baseMsg;
@@ -238,46 +235,35 @@ public class UdpManager: MonoBehaviour
 
 
                             SimpleMsgQueue.Enqueue(baseHandler);
-                            
+
                         }
                         else if (type == 1)
                         {
 
                             print("收到了消息");
-                                if (!MesgDic.ContainsKey(nowSeq))
+                            if (!MesgDic.ContainsKey(nowSeq))
+                            {
+                                lock (WillAddBuff)
                                 {
-                                    lock (WillAddBuff)
-                                    {
-                                        
-                                        WillAddBuff.Add(new DataPackage(nowSeq, baseHandler));
-                                    }
 
+                                    WillAddBuff.Add(new DataPackage(nowSeq, baseHandler));
                                 }
-                                else
-                                {
-                                    MesgDic[nowSeq] = baseHandler;
-                                }
+
+                            }
+                            else
+                            {
+                                MesgDic[nowSeq] = baseHandler;
+                            }
                             //UdpAckMsg msg = new UdpAckMsg();
                             //msg.seq = nowSeq;
                             //UDPSend(msg, E_UDP_MSG_TYPE.SIMPLE);
                         }
                     }
+
                     nowIndex += msgLength;
-                    if (nowIndex >= chacheNum)
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    break;
+
                 }
             }
-            else
-            {
-                break;
-            }
-        }
     }
     public void HandleBusinessLogic(object obj)
     {
@@ -294,6 +280,14 @@ public class UdpManager: MonoBehaviour
                         handler.HandlerDo();
                     }
                   
+                }
+                if (UdpManager.Instance.SimpleMsgQueue.TryDequeue(out BaseHandler handler1))
+                {
+                    if (handler1 != null)
+                    {
+
+                        handler1.HandlerDo();
+                    }
                 }
             }
             catch (Exception e)
@@ -389,7 +383,7 @@ public class UdpManager: MonoBehaviour
             isTime_OUT_LOGIC_START = false;
         }
         
-
+        
         //if (!sortedBuffer.ContainsKey(expectedSequence) && isTime_OUT_LOGIC_START==false)
         //{
 
@@ -437,6 +431,7 @@ public class UdpManager: MonoBehaviour
 
     }
 
+    #region 协程版本的超时逻辑
     //IEnumerator TIME_OUT_UPDATE_NOWSEQUENCE()
     //{
     //    print("协程计数");
@@ -466,26 +461,11 @@ public class UdpManager: MonoBehaviour
     //    isTime_OUT_LOGIC_START = false;
     //    TimeOutHasReceivedNowSeq = false;
     //}
-    private void Update()
-    {
-        if (UdpManager.Instance.SimpleMsgQueue.TryDequeue(out BaseHandler handler1))
-        {
-            if (handler1 != null)
-            {
+    
 
-                handler1.HandlerDo();
-            }
-        }
-       
+    #endregion
+  
 
-
-
-        //if(isTime_OUT_LOGIC_START && should_Start_TimeOut_LOGIC)
-        //{
-        //    StartCoroutine(TIME_OUT_UPDATE_NOWSEQUENCE());
-        //    should_Start_TimeOut_LOGIC = false;
-        //}
-    }
 
     private void OnDestroy()
     {

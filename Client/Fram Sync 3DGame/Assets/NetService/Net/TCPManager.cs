@@ -206,8 +206,9 @@ public class TCPManager: MonoBehaviour
                     break;
                 }
                     HandleReceive(bytes, Length);
-                
-                    
+
+                    #region 老版本的收消息switch-case
+
                     //int index = 0;
                     //int msgID = BitConverter.ToInt32(dataContainer, 0);
                     //index += 4;
@@ -228,6 +229,9 @@ public class TCPManager: MonoBehaviour
                     //    continue;
                     //}
                     //receiveQueue.Enqueue(basemsg);
+
+                    #endregion
+                  
                 
             }
             catch (Exception e)
@@ -337,7 +341,7 @@ public class TCPManager: MonoBehaviour
         }
         
 
-        
+        #region 老版本的收消息switch-case
         //int nowindex = 0;
         //int ID = 0;
         //int msgLength = 0;
@@ -396,47 +400,9 @@ public class TCPManager: MonoBehaviour
         //    }
 
         //}
-
+        #endregion
     }
-    //public void ConnectWithServer()
-    //{
-    //    byte[] bytes=new byte[50000];
-    //    int Length = 0;
 
-    //    try
-    //    {
-
-    //        socket.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8080));
-
-    //    }
-    //    catch (SocketException e)
-    //    {
-    //        print(e.Message);
-    //        return;
-    //    }
-    //    while (true)
-    //    {
-            
-    //        if(canSend)
-    //        {
-    //            print("开始聊天");
-    //            if(message!=null)
-    //            {
-    //                print("已经聊天");
-    //                socket.Send(Encoding.UTF8.GetBytes(message));
-    //                message = null;
-    //            }
-    //            canSend = false;
-    //        }
-            
-    //        if(Length>0)
-    //        {
-    //            print(Encoding.UTF8.GetString(bytes,0,Length));
-    //            Length = 0;
-    //        }
-    //    }
-    //}
-    // Update is called once per frame
     void Update()
     {
         

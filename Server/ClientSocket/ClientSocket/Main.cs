@@ -13,9 +13,9 @@ namespace ClientSocket
         public static FrameManager frameManager;
         public static void  Main(string[] args)
         {
-             serverSocket = new ServerSocket("127.0.0.1", 9000);
-             udpserver =new UDPServer("0.0.0.0", 13456);
-              frameManager = new FrameManager();
+             serverSocket = new ServerSocket("0.0.0.0", 9000);
+             udpserver =new UDPServer("0.0.0.0", 8250);
+              frameManager = new FrameManager(15);
             string input = "";
             while (true)
             {
