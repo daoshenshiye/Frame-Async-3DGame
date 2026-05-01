@@ -56,9 +56,8 @@ public class FrameManager
 
                 continue;
             }
-            
+
             lastTime = DateTime.Now;
-               
                 try{
                     ServerFrameAuthenMsg serverLogicFrame = new ServerFrameAuthenMsg();
                     serverLogicFrame.serLogicFrame = ReadLogicFrame();
