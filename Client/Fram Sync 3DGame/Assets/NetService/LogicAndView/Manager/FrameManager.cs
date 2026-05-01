@@ -4,19 +4,20 @@ using GameSystem;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 
 public class FrameManager:MonoBehaviour
 {
-
     private  int FixedFrameRate = 30;
     private float FixedDeltaTime = 0;
     public  float accumulatedFrames = 0;
     public static long CurrentLogicFrame;
-    Vector3 Localinput;
+    private Vector3 Localinput;
     public int localExecuteTimes;
     public long preLogicFrame=0;
     public bool shouldSendInput=false;
@@ -24,16 +25,14 @@ public class FrameManager:MonoBehaviour
     private DateTime lastUpdateTime15FPS= DateTime.MinValue;
     private static FrameManager instance;
     public static FrameManager Instance => instance;
-    
     public int Counter;
-    public LogicAndView LocallogicView;
     public double CurrentRTT;
     private DateTime preSendTime = DateTime.MinValue;
     private float serverframeMs = 1f / 15f;
-    private Dictionary<long,InputData> inputHistory=new Dictionary<long, InputData>();
-    private Dictionary<long,Dictionary<int,PlayerStateData>> stateHistory=new Dictionary<long, Dictionary<int, PlayerStateData>>();
-    private int MaxinputSize=100;
-    private readonly object _dictLock = new object();
+    private Queue<InputData> inputHistory=new Queue<InputData>();
+    private Queue<Dictionary<int,PlayerStateData>> stateHistory=new Queue<Dictionary<int,PlayerStateData>>();
+    private Queue<List<ServerInputAndStateData>>  clientFrameInputAndStates=new Queue<List<ServerInputAndStateData>>();
+    private int HistoryCount = 80;
     //private int netOffset;
     private void Awake()
     {
@@ -59,14 +58,15 @@ public class FrameManager:MonoBehaviour
 
             //    lastUpdateTime30FPS = DateTime.Now;
             //}
-            GetLocalInputs();
-            SaveLocalInputHistory(CurrentLogicFrame + 4);
-            SaveStateSnapshot(CurrentLogicFrame + 4);
-            CleanHistory();
 
+        
             TimeSpan elapsedtime = DateTime.Now - lastUpdateTime15FPS;
             if (lastUpdateTime15FPS == DateTime.MinValue || elapsedtime.TotalSeconds >= serverframeMs)
             {
+                Localinput= InputManager.Instance.GetLocalPlayerInput();
+                print(Localinput);
+                SaveStateSnapshot();
+                CleanHistory();
                 UpdateView();
                 SendInputMsgToServer();
                 lastUpdateTime15FPS = DateTime.Now;
@@ -76,66 +76,33 @@ public class FrameManager:MonoBehaviour
         }
         
     }
+
     private void UpdateView()
     {
-        if (LocallogicView == null)
+        if (LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID)!=null)
         {
-            LocallogicView = LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID);
-        }
-        else if (PlayerManager.LocalPlayerID != -1)
-        {
-
-            LocallogicView.view.UpdateView(Localinput, serverframeMs);
+            LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID).view.UpdateView(Localinput, serverframeMs);
         }
     }
-    private void SaveLocalInputHistory(long serverFrame)
-    {
-        InputData inputData = new InputData();
-        inputData.Horizontal = Localinput.x;
-        inputData.Vertical = Localinput.z;
-        inputData.playerId = PlayerManager.LocalPlayerID;
 
-        lock (_dictLock)
-        {
-            if (inputHistory.ContainsKey(serverFrame))
-                inputHistory[serverFrame] = inputData;
-            else
-                inputHistory.Add(serverFrame, inputData);
-        }
-    }
-    private void SaveStateSnapshot(long serverFrame)
+    private void SaveStateSnapshot()
     {
-        lock (_dictLock)
-        {
-            Dictionary<int, PlayerStateData> states = new Dictionary<int, PlayerStateData>();
-            foreach (var item in LogicViewBridge.Instance.PlayerLV_Dic)
-            {
-                PlayerStateData playerState = new PlayerStateData();
-                playerState.hp = item.Value.logic.HP;
-                states.Add(item.Key, playerState);
-            }
-
-            if (stateHistory.ContainsKey(serverFrame))
-                stateHistory[serverFrame] = states;
-            else
-                stateHistory.Add(serverFrame, states);
-        }
+        if (Localinput == Vector3.zero)
+            return;
+        
+         List<ServerInputAndStateData> list = new List<ServerInputAndStateData>();
+         list=LogicViewBridge.Instance.GetServerInputAndStateData();
+         if(list!=null)
+         clientFrameInputAndStates.Enqueue(list);      
+     
     }
     private void CleanHistory()
     {
-        List<long> RemoveList = new List<long>();
-        lock (_dictLock)
+        if (clientFrameInputAndStates.Count>=HistoryCount)
         {
-            foreach (var item in inputHistory)
+            for (int i = 0; i <HistoryCount/2 ; i++)
             {
-                if (item.Key < CurrentLogicFrame - MaxinputSize)
-                    RemoveList.Add(item.Key);
-            }
-
-            foreach (var item in RemoveList)
-            {
-                inputHistory.Remove(item);
-                stateHistory.Remove(item);
+                clientFrameInputAndStates.TryDequeue(out List<ServerInputAndStateData> list);
             }
         }
     }
@@ -163,7 +130,7 @@ public class FrameManager:MonoBehaviour
                item.playerstate.playerPos.z
            );
 
-                logicAndView.view.HP = item.playerstate.hp;
+                logicAndView.logic.HP = item.playerstate.hp;
                 logicAndView.logic.LogicPos=serverPos;
             
            
@@ -173,86 +140,25 @@ public class FrameManager:MonoBehaviour
             print("只有一个玩家移动");
         }
         Counter = 0;
-        List<long> Removelist = new List<long>();
-        lock (_dictLock)
-        {
-            var stateKeys = new List<long>(stateHistory.Keys);
-            foreach (var item in stateKeys)
-            {
-                if (serverFrame > item)
-                    Removelist.Add(item);
-            }
-
-            foreach (var item in Removelist)
-                stateHistory.Remove(item);
-        }
+        clientFrameInputAndStates.TryDequeue(out List<ServerInputAndStateData> list);
     }
     private void ReplayUnconfirmedInputs(long serverFrame)
     {
-
-        List<long> allFrames = new List<long>();
-
-        lock (_dictLock)
-        {
-            allFrames.AddRange(inputHistory.Keys);
-        }
-
-        var unconfirmedFrames = new List<long>();
         
-        foreach (var frame in allFrames)
+        while (clientFrameInputAndStates.TryDequeue(out List<ServerInputAndStateData> list))
         {
-            if (frame > serverFrame)
+            foreach (var v in list)
             {
-                unconfirmedFrames.Add(frame);
-                
+                if (v.playerId == PlayerManager.LocalPlayerID)
+                {
+                    print("执行了重放");
+                    LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID)
+                        .logic.UpdateMove(new Vector3(v.inputdata.Horizontal,v.inputdata.Jump?1:0 ,v.inputdata.Vertical),serverframeMs);
+                }
             }
-               
-            
         }
-
-        unconfirmedFrames.Sort();
-
-        foreach (var frame in unconfirmedFrames)
-        {
-            InputData input = null;
-            lock (_dictLock) // 加锁
-            {
-                inputHistory.TryGetValue(frame, out input);
-            }
-
-            if (input != null && LocallogicView != null)
-            {
-                print("执行了重放");
-                LocallogicView.logic.UpdateMove(
-                    new Vector3(input.Horizontal, input.Jump ? 1 : 0, input.Vertical),
-                    serverframeMs
-                );
-            }
-
-            SaveStateSnapshot(frame);
-        }
-
     }
-    public void GetLocalInputs()
-    {
 
-        //if (Localinput.x != 0)
-        //{
-        //    timer = DateTime.Now;
-        //}
-        //TimeSpan delta = DateTime.Now - timer;
-        //print(delta.TotalSeconds);
-        
-        Localinput.x = Input.GetAxis("Horizontal");
-        Localinput.z = Input.GetAxis("Vertical");
-
-        if (Input.touchCount > 0)
-        {
-            Localinput.x = 0.6f;
-        }
-      
-    }
-    
     public void UpdateLogicFrame(ServerFrameAuthenMsg msg)
     {
         
@@ -273,7 +179,7 @@ public class FrameManager:MonoBehaviour
         RollBack(msg);
 
         CurrentLogicFrame = msg.serLogicFrame;
-        
+      
         ExecuteLogic(CurrentLogicFrame);
 
 
@@ -285,7 +191,7 @@ public class FrameManager:MonoBehaviour
         preSendTime = DateTime.Now;
 
         preLogicFrame = CurrentLogicFrame;
-        Localinput=Vector3.zero;
+        
     }
 
     private void SendInputMsgToServer()
@@ -293,6 +199,7 @@ public class FrameManager:MonoBehaviour
         if (TCPManager.Instance.isConnected
          && PlayerManager.LocalPlayerID != -1&&Localinput!=Vector3.zero)
         {
+            
             if(Localinput!=Vector3.zero)
             UdpManager.Instance.Counter++;
             print("发送了有效消息");
@@ -305,14 +212,14 @@ public class FrameManager:MonoBehaviour
             inputMessage.input.Vertical = Localinput.z;
             
             UdpManager.Instance.UDPSend(inputMessage);
-            
+            Localinput=Vector3.zero;   
         }
     }
     public void ExecuteLogic(long LogicFrame)
     {
         if(!InputManager.Instance.playerInputs.ContainsKey(LogicFrame))
         {
-            
+            print("InputManager不包含");
             return;
         }
         Dictionary<int, Vector3> otherInput = null;

@@ -26,7 +26,7 @@ namespace ClientSocket.TCP
 
     public class ClientSocket
     {
-        private byte[] chacheBytes = new byte[1024 * 1024];
+        private byte[] chacheBytes = new byte[1024*5];
 
         
         private List<ChacheReceive> chacheReceives= new List<ChacheReceive>();
@@ -78,7 +78,7 @@ namespace ClientSocket.TCP
                 try
                 {
 
-                    byte[] bytes = new byte[1024 * 5];
+                    byte[] bytes = new byte[1024*5];
                     int Length = socket.Receive(bytes);
                     if (Length <= 0)
                     {

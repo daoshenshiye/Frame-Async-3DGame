@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using GamePlayer;
 using UnityEngine;
 public class LogicAndView { 
 public PlayerLogic logic;
@@ -46,6 +47,58 @@ public class LogicViewBridge
             PlayerLV_Dic.Remove(playerId);
         }
     }
+
+    public List<ServerInputAndStateData> GetServerInputAndStateData()
+    {
+        List<ServerInputAndStateData> serverInputAndStateData=new List<ServerInputAndStateData>();
+        foreach (var V in PlayerLV_Dic)
+        {
+            ServerInputAndStateData inputAndStateData=new ServerInputAndStateData();
+            if (V.Key==PlayerManager.LocalPlayerID)
+            {
+               Vector3 input= InputManager.Instance.GetLocalPlayerInput();
+               InputData inputData = new InputData();
+               inputData.Horizontal = input.x;
+               inputData.Vertical = input.z;
+               inputData.Jump = input.y>0?true:false;
+               inputData.playerId=V.Key;
+               PlayerStateData playerStateData=new PlayerStateData();
+               playerStateData.hp = V.Value.logic.HP;
+               PlayerPosData PosData=new PlayerPosData();
+               PosData.x = V.Value.logic.LogicPos.x;
+               PosData.y = V.Value.logic.LogicPos.y;
+               PosData.z = V.Value.logic.LogicPos.z;
+               playerStateData.playerPos = PosData;
+               inputAndStateData.playerId=V.Key;
+               inputAndStateData.inputdata = inputData;
+               inputAndStateData.playerstate=playerStateData;
+                serverInputAndStateData.Add(inputAndStateData);
+                
+            }
+            else
+            {
+                PlayerStateData playerStateData=new PlayerStateData();
+                playerStateData.hp = V.Value.logic.HP;
+                PlayerPosData PosData=new PlayerPosData();
+                PosData.x = V.Value.logic.LogicPos.x;
+                PosData.y = V.Value.logic.LogicPos.y;
+                PosData.z = V.Value.logic.LogicPos.z;
+                playerStateData.playerPos = PosData;
+                inputAndStateData.playerId=V.Key;
+                inputAndStateData.inputdata = new InputData();
+                inputAndStateData.playerstate=playerStateData;
+                serverInputAndStateData.Add(inputAndStateData);
+            }
+            
+        }
+
+        if (serverInputAndStateData.Count == 0)
+        {
+            return null;
+        }
+        return serverInputAndStateData;
+    }
+
     public LogicAndView GetPlayerLogicAndView(int playerId)
     {
         if(PlayerLV_Dic.ContainsKey(playerId))

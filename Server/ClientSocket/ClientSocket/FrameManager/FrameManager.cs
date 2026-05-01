@@ -41,8 +41,6 @@ public class FrameManager
     {
         while (shouldOpenLogic)
         {
-            
-            
             // 计算当前距离上一帧过了多久
             var elapsedMs = (DateTime.Now - lastTime).TotalMilliseconds;
 

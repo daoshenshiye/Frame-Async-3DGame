@@ -92,7 +92,7 @@ public class PlayerManager
             player_Dic[playerId]=null;
             
             player_Dic.Remove(playerId);
-            FrameManager.Instance.LocallogicView = null;
+            
         }
     }
 }

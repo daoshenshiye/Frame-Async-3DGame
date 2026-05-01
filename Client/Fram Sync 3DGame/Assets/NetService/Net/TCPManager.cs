@@ -36,7 +36,7 @@ public class TCPManager: MonoBehaviour
     //private static string TCP_IP = "119.84.246.217";
     //private static int TCP_port = 36252;
     private Socket socket;
-    private byte[] chacheBytes=new byte[1024*1024];
+    private byte[] chacheBytes=new byte[1024*5];
     private int chacheNum;
     Queue<BaseHandler> receiveQueue = new Queue<BaseHandler>();
     Queue<BaseMsg> sendQueue= new Queue<BaseMsg>();
@@ -88,7 +88,6 @@ public class TCPManager: MonoBehaviour
       socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
         try
         {
-
             var connectTask = socket.ConnectAsync(ip, port);
             if (await Task.WhenAny(connectTask, Task.Delay(3000)) != connectTask)
             {
@@ -194,7 +193,7 @@ public class TCPManager: MonoBehaviour
     }
     private void ReceiveMesg(object obj)
     {
-        byte[] bytes = new byte[1024 * 1024];
+        byte[] bytes = new byte[1024 * 5];
         while (isConnected)
         {
             try
@@ -303,7 +302,6 @@ public class TCPManager: MonoBehaviour
                     if (nowindex == chacheNum)
                     {
                         chacheNum = 0;
-                        chacheBytes = new byte[1024 * 1024];
                         break;
                     }
                 }
@@ -330,7 +328,7 @@ public class TCPManager: MonoBehaviour
                         chacheNum2 = remaining;
                     }
                     chacheNum = 0;
-                    chacheBytes = new byte[1024 * 1024];
+                    chacheBytes = new byte[1024];
                     chacheReceives.Add(new ChacheReceive(chacheBytes2, chacheNum2));
                     break;
                 }

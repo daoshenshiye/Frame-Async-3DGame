@@ -10,6 +10,7 @@ public class PlayerInputInfo
 
 public class InputManager
 {
+    private Vector3 localinput;
     private static InputManager instance;
     public static InputManager Instance
     {
@@ -66,5 +67,18 @@ public class InputManager
         }
     }
 
+    public Vector3 GetLocalPlayerInput()
+    {
+        
+        localinput.x = Input.GetAxis("Horizontal");
+        localinput.z = Input.GetAxis("Vertical");
+
+        if (Input.touchCount > 0)
+        {
+            localinput.x = 0.6f;
+        }
+
+        return localinput;
+    }
 
 }

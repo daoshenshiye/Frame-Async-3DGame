@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace GameSystem{
 		public class ServerFrameAuthenMsgHandler:BaseHandler{
@@ -25,6 +26,8 @@ namespace GameSystem{
                         InputManager.Instance.AddVisitorInput(message.serLogicFrame, item.playerId
                        , new UnityEngine.Vector3(x, 0, z));
                     }
+
+                    
                     FrameManager.Instance.UpdateLogicFrame(message);
                     
                 }

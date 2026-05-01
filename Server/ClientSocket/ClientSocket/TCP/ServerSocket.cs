@@ -63,8 +63,6 @@ namespace ClientSocket.TCP
                         TCPConnectionBuildMsg tcpConnect = new TCPConnectionBuildMsg();
                         clientSocket.SendMessage(tcpConnect);
                     });
-                   
-                    
                 }
                 catch(Exception e)
                 {
