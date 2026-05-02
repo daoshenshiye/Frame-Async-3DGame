@@ -10,7 +10,9 @@ using UnityEngine;
 using UnityEngine.PlayerLoop;
 using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
-
+//重放采用从Queue队列中取元素的方式进行重放
+//流程如下: 玩家输入FixedUpdate获取玩家输入并存入Queue队列中,服务器权威帧下来时进行回滚重放,回滚要保证取出队列中的peak,这一步可以让重放时不会重复执行当前帧操作
+//,然后进行重放把queue中所有元素都执行一遍
 public class FrameManager:MonoBehaviour
 {
     private  int FixedFrameRate = 30;
@@ -42,12 +44,11 @@ public class FrameManager:MonoBehaviour
        
     }
 
+    //以15FPS的速率与服务器15FPS对齐
     private void FixedUpdate()
     {
         if (PlayerManager.LocalPlayerID != -1 && shouldSendInput)
         {
-
-
             //TimeSpan elapsed = DateTime.Now - lastUpdateTime30FPS;
             //if (lastUpdateTime30FPS == DateTime.MinValue || elapsed.TotalSeconds >= FixedDeltaTime)
             //{
@@ -58,20 +59,19 @@ public class FrameManager:MonoBehaviour
 
             //    lastUpdateTime30FPS = DateTime.Now;
             //}
-
-        
-            TimeSpan elapsedtime = DateTime.Now - lastUpdateTime15FPS;
-            if (lastUpdateTime15FPS == DateTime.MinValue || elapsedtime.TotalSeconds >= serverframeMs)
-            {
-                Localinput= InputManager.Instance.GetLocalPlayerInput();
-                print(Localinput);
-                SaveStateSnapshot();
-                CleanHistory();
-                UpdateView();
-                SendInputMsgToServer();
-                lastUpdateTime15FPS = DateTime.Now;
-             
-            }
+            Localinput= InputManager.Instance.GetLocalPlayerInput();
+            print(Localinput);
+            SaveStateSnapshot();
+            CleanHistory();
+            UpdateView();
+            SendInputMsgToServer();
+            // lastUpdateTime15FPS = DateTime.Now;
+            // TimeSpan elapsedtime = DateTime.Now - lastUpdateTime15FPS;
+            // if (lastUpdateTime15FPS == DateTime.MinValue || elapsedtime.TotalSeconds >= serverframeMs)
+            // {
+            //
+            //  
+            // }
 
         }
         
@@ -219,7 +219,6 @@ public class FrameManager:MonoBehaviour
     {
         if(!InputManager.Instance.playerInputs.ContainsKey(LogicFrame))
         {
-            print("InputManager不包含");
             return;
         }
         Dictionary<int, Vector3> otherInput = null;

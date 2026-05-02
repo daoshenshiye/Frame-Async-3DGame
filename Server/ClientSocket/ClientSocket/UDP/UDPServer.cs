@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using ClientSocket.Tools;
 
 namespace ClientSocket.UDP
 {
@@ -42,7 +43,6 @@ namespace ClientSocket.UDP
         public ConcurrentQueue<BaseHandler> simpleMsgQueue=new ConcurrentQueue<BaseHandler>();
         public Dictionary<long,List<string>> needDeleteDic=new Dictionary<long, List<string>>();
         private List<AckSendPackage> needSendList=new List<AckSendPackage>();
-        public int Counter=0;
         private byte[] buffer = new byte[8192];
 
 
@@ -100,7 +100,7 @@ namespace ClientSocket.UDP
                     else
                     {
                         Console.WriteLine("UDP客户端地址" + key);
-
+                        lock(UDP_Client_Dic)
                         UDP_Client_Dic.Add(key, new UDPClient(key));
                         
                         UDP_Client_Dic[key].ReceiveMsg(buffer, length);
@@ -136,7 +136,7 @@ namespace ClientSocket.UDP
                     ShareinputsEach();
                     DoReceive();
                     // allow other threads to run and avoid tight busy-looping
-                    Thread.Sleep(1);
+                    
                     
                 }
             }
@@ -251,17 +251,20 @@ namespace ClientSocket.UDP
                         string strID = item.Key;
   
 
-                            List<long> sortedKeys =new List<long>();
-                            sortedKeys.AddRange(item.Value.inputsDic.Keys);
-                            sortedKeys.Sort();
-                           
-                        if(MainClass.frameManager.playerInputs.ContainsKey(item.Value.playerID))
-                        {
-                            if (MainClass.frameManager.playerInputs[item.Value.playerID].Count != 0)
-                            {
-                                continue;
-                            }
-                        }
+                        List<long> sortedKeys =new List<long>();
+                        sortedKeys.AddRange(item.Value.inputsDic.Keys);
+                        sortedKeys.Sort();
+
+                        #region  控制每一帧每个玩家只能一个输入
+                        // if(MainClass.frameManager.playerInputs.ContainsKey(item.Value.playerID))
+                        // {
+                        //     if (MainClass.frameManager.playerInputs[item.Value.playerID].Count != 0)
+                        //     {
+                        //         continue;
+                        //     }
+                        // }
+                        #endregion
+
                         
                         List<long> keysToRemove = new List<long>();
                         foreach (var item1 in sortedKeys)
@@ -272,7 +275,6 @@ namespace ClientSocket.UDP
                                 handler.HandlerDo();
                                 //var q = playerInputsQ_Dic.GetOrAdd(item.Value.playerID, _ => new ConcurrentQueue<BaseHandler>());
                                 //q.Enqueue(handler);
-
 
                                 // High-frequency logging disabled to reduce IO contention and avoid blocking.
                                 // try { Console.WriteLine($"ShareInputs: moved seq {item1.Key} for player {item.Value.playerID} from {strID} at {DateTime.Now:O}"); } catch { }

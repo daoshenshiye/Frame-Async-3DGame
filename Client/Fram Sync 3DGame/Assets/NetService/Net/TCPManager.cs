@@ -47,6 +47,7 @@ public class TCPManager: MonoBehaviour
     public bool buildTCPConnection;
     private float SEND_HEART_MSG_TIME = 5f;
     private const int RetryDelay_MS = 1000; 
+    private const int WaitServerConnection_MS = 2000;
     private const int MaxRetryAttempts = 5;
     private int currentRetryAttempts = 0;   
     private void Awake()
@@ -79,11 +80,11 @@ public class TCPManager: MonoBehaviour
   
     public async Task  ConnectWith(string ip,int port)
     {
-        if (isConnected)
+        if (buildTCPConnection)
         {
             return;
         }
-        Close();
+        
         IPEndPoint iPEndPoint=new IPEndPoint(IPAddress.Parse(ip), port);
       socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
         try
@@ -91,17 +92,16 @@ public class TCPManager: MonoBehaviour
             var connectTask = socket.ConnectAsync(ip, port);
             if (await Task.WhenAny(connectTask, Task.Delay(3000)) != connectTask)
             {
-                socket.Close();
-                throw new Exception("连接超时");
+                Close(); 
+                throw new Exception("连接超时,进行尝试");
             }
+
             
-           
-            currentRetryAttempts = 0;
-           
-            if (socket.LocalEndPoint==null&& socket.RemoteEndPoint==null&&!socket.Connected)
+            if (!socket.Connected)
             {
-               
+               Close();
                 print("连接失败");
+                throw new Exception("连接失败,进行重连");
             }
             else
             {
@@ -109,8 +109,18 @@ public class TCPManager: MonoBehaviour
                 print("连接成功");
                 ThreadPool.QueueUserWorkItem(SendMesg);
                 ThreadPool.QueueUserWorkItem(ReceiveMesg);
+                
             }
-           
+
+            if (currentRetryAttempts>0&&socket.Connected)
+            {
+                Task.Delay(WaitServerConnection_MS);
+            }
+            if (!buildTCPConnection)
+            {
+                
+                throw new Exception("与游戏服务器未取得联系");
+            }
         }
         catch(Exception e)
         {

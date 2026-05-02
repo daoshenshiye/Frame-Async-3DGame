@@ -49,8 +49,8 @@ public class FrameManager
             {
                 // 休眠剩下的时间，不占CPU
                 int sleepMs = timespan - (int)elapsedMs;
-                if (sleepMs > 0)
-                    Thread.Sleep(sleepMs);
+                // if (sleepMs > 0)
+                //     Thread.Sleep(sleepMs);
 
                 continue;
             }
