@@ -34,12 +34,12 @@ namespace ClientSocket.UDP
     public class UDPServer
     {
         public Dictionary<string, UDPClient> UDP_Client_Dic = new Dictionary<string, UDPClient>();
-        public Dictionary<int,string> ClientPID_TO_Addr_Dic= new Dictionary<int,string>();
+        // public Dictionary<int,string> ClientPID_TO_Addr_Dic= new Dictionary<int,string>();
         public  Dictionary<long, Dictionary<string,AckPackage>> AckDic= new Dictionary<long, Dictionary<string, AckPackage>>();
         private  Socket socket;
         private bool isRunning = false;
         public  long nowsequence = 0;
-        public ConcurrentDictionary<int,ConcurrentQueue<BaseHandler>> playerInputsQ_Dic=new ConcurrentDictionary<int, ConcurrentQueue<BaseHandler>>();
+        // public ConcurrentDictionary<int,ConcurrentQueue<BaseHandler>> playerInputsQ_Dic=new ConcurrentDictionary<int, ConcurrentQueue<BaseHandler>>();
         public ConcurrentQueue<BaseHandler> simpleMsgQueue=new ConcurrentQueue<BaseHandler>();
         public Dictionary<long,List<string>> needDeleteDic=new Dictionary<long, List<string>>();
         private List<AckSendPackage> needSendList=new List<AckSendPackage>();

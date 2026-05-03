@@ -21,8 +21,6 @@ namespace ClientSocket.UDP
         public ConcurrentDictionary<long, BaseHandler> inputsDic;
         public string ipaddr;
         public int playerID=-1;
-       
-        public PlayerStateData playerStateData;
         private bool shouldOpen=false;
         
         public  UDPClient(string id)
@@ -49,7 +47,7 @@ namespace ClientSocket.UDP
                             
                             MainClass.udpserver.UDP_Client_Dic.Remove(ipaddr);
                                     // remove player queue entry if exists
-                            MainClass.udpserver.playerInputsQ_Dic.TryRemove(playerID, out _);
+                            // MainClass.udpserver.playerInputsQ_Dic.TryRemove(playerID, out _);
                             
                             Console.WriteLine("删除客户端" + ipaddr);
 
@@ -169,12 +167,11 @@ namespace ClientSocket.UDP
                                     {
                                         UdpPlayerAddMsg udpAdd = baseHandler.msg as UdpPlayerAddMsg;
                                         playerID = udpAdd.playerId;
-                                        playerStateData = udpAdd.playerstate;
                                         Console.WriteLine("玩家成功加入UDP" + playerID);
-                                        if (!MainClass.udpserver.ClientPID_TO_Addr_Dic.ContainsKey(playerID))
-                                        {
-                                            MainClass.udpserver.ClientPID_TO_Addr_Dic.Add(playerID, ipaddr);
-                                        }
+                                        // if (!MainClass.udpserver.ClientPID_TO_Addr_Dic.ContainsKey(playerID))
+                                        // {
+                                        //     MainClass.udpserver.ClientPID_TO_Addr_Dic.Add(playerID, ipaddr);
+                                        // }
 
                                         UDPConnectionBuildMsg msg = new UDPConnectionBuildMsg();
                                         MainClass.udpserver.SendMessage(msg,
@@ -215,10 +212,11 @@ namespace ClientSocket.UDP
                                 // If this message contains a player id (e.g. InputMessage), update the server mapping
 
 
-                                if (baseHandler.msg is GameMessage.InputMessage inputMsg)
-                                {
-                                    MainClass.udpserver.ClientPID_TO_Addr_Dic[inputMsg.PlayerId] = ipaddr;
-                                }
+                                
+                                // if (baseHandler.msg is GameMessage.InputMessage inputMsg)
+                                // {
+                                //     MainClass.udpserver.ClientPID_TO_Addr_Dic[inputMsg.PlayerId] = ipaddr;
+                                // }
 
 
 

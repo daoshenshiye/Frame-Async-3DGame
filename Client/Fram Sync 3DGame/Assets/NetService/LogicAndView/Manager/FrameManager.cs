@@ -6,9 +6,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
+using Update = UnityEngine.PlayerLoop.Update;
 
 //重放采用从Queue队列中取元素的方式进行重放
 //流程如下: 玩家输入FixedUpdate获取玩家输入并存入Queue队列中,服务器权威帧下来时进行回滚重放,回滚要保证取出队列中的peak,这一步可以让重放时不会重复执行当前帧操作
@@ -41,12 +43,20 @@ public class FrameManager:MonoBehaviour
         instance= this;
         FixedDeltaTime = 1f / FixedFrameRate;
         DontDestroyOnLoad(this);
-       
     }
 
     //以15FPS的速率与服务器15FPS对齐
     private void FixedUpdate()
     {
+        try
+        {
+
+        }
+        catch (Exception e)
+        {
+            print(e.Message);
+            print(e.StackTrace);
+        }
         if (PlayerManager.LocalPlayerID != -1 && shouldSendInput)
         {
             //TimeSpan elapsed = DateTime.Now - lastUpdateTime30FPS;
@@ -84,6 +94,8 @@ public class FrameManager:MonoBehaviour
             LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID).view.UpdateView(Localinput, serverframeMs);
         }
     }
+
+
 
     private void SaveStateSnapshot()
     {
@@ -206,11 +218,26 @@ public class FrameManager:MonoBehaviour
 
             InputMessage inputMessage = new InputMessage();
             inputMessage.PlayerId = PlayerManager.LocalPlayerID;
-
+            
             inputMessage.input = new GamePlayer.InputData();
             inputMessage.input.Horizontal = Localinput.x;
             inputMessage.input.Vertical = Localinput.z;
-            
+            Vector3 size;
+            if (PlayerManager.Instance.GetPlayerInfo(PlayerManager.LocalPlayerID)!=null)
+            {
+                size= PlayerManager.Instance.GetPlayerInfo(PlayerManager.LocalPlayerID)
+                    .player_instance.GetComponent<BoxCollider>().size;      
+            }
+            else
+            {
+                size=Vector3.zero;
+                print("无法获取玩家信息");
+            }
+          
+           inputMessage.input.ColliderBoxSize = new PlayerPosData();
+           inputMessage.input.ColliderBoxSize.x = size.x;
+           inputMessage.input.ColliderBoxSize.y = size.y;
+           inputMessage.input.ColliderBoxSize.z = size.z;
             UdpManager.Instance.UDPSend(inputMessage);
             Localinput=Vector3.zero;   
         }

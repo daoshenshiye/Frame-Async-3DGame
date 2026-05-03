@@ -74,6 +74,15 @@ public class PlayerManager
         }
 
     }
+
+    public PlayerInfo GetPlayerInfo(int playerId)
+    {
+        if (player_Dic.ContainsKey(playerId))
+        {
+            return player_Dic[playerId];
+        }
+        return null;
+    }
     public void RemovePlayerInstance(int playerId) {
     
     if (player_Dic.ContainsKey(playerId))

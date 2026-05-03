@@ -8,15 +8,15 @@ namespace GamePlayer{
 		{
 		int num=0;
 		num+=4;
-            num += (playerPos != null) ? playerPos.GetBytesNum() : 0;
-            return num;
+		num+=playerPos.GetBytesNum();
+		return num;
 		}
 		public override byte[] Writting()
 		{
 		int index=0;
 		byte[] bytes=new byte[GetBytesNum()];
 		WriteInt(bytes,hp,ref index);
-		WriteData(bytes, (playerPos != null) ? playerPos:new PlayerPosData(), ref index);
+		WriteData(bytes,playerPos,ref index);
 		return bytes;
 		}
 		public override int Reading(byte[] bytes,int beginIndex=0)

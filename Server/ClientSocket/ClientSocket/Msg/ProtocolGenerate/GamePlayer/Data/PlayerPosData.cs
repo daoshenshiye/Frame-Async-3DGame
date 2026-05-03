@@ -5,7 +5,6 @@ namespace GamePlayer{
 		public  float x;
 		public  float y;
 		public  float z;
-		
 		public override int GetBytesNum()
 		{
 		int num=0;

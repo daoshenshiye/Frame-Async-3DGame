@@ -1,6 +1,7 @@
-using GamePlayer;
 using System.Collections.Generic;
 using System.Text;
+using GamePlayer;
+
 namespace GameMessage{
 		public class InputMessage:BaseMsg{
 		public  int PlayerId;

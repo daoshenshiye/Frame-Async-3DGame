@@ -10,7 +10,9 @@ using System.Collections.Generic;
 
 using System.Numerics;
 using System.Runtime.InteropServices;
-
+using ClientSocket.Physics;
+using ClientSocket.Physics.Colliders;
+using ClientSocket.ServerPlayer;
 
 
 public class FrameManager
@@ -65,6 +67,7 @@ public class FrameManager
                         if (q != null && q.TryDequeue(out ServerInputAndStateData serverInputAndState))
                         {
                             inputs.Add(CalcPlayerState(serverInputAndState));
+                            PhysicsWorld.Instance.Tick();
                         }
                     }
                     if (inputs.Count == 0)
@@ -324,66 +327,42 @@ public class FrameManager
 
             PlayerStateData playerStateData;
 
-
-            if (MainClass.udpserver.ClientPID_TO_Addr_Dic.ContainsKey(msg.playerId))
+            if (PlayerManager.Instance.player_Dic.ContainsKey(msg.playerId))
             {
-                UDPClient clientInfo;
-                lock (MainClass.udpserver.UDP_Client_Dic)
-                {
-                    if (MainClass.udpserver.UDP_Client_Dic.ContainsKey(MainClass.udpserver.ClientPID_TO_Addr_Dic[msg.playerId]))
-                    {
-                        clientInfo = MainClass.udpserver.UDP_Client_Dic[MainClass.udpserver.ClientPID_TO_Addr_Dic[msg.playerId]];
-                        if (clientInfo.playerStateData==null)
-                        {
-                            playerStateAndInput.playerstate = new PlayerStateData();
-                            playerStateAndInput.playerstate.playerPos = new PlayerPosData();
-                            return playerStateAndInput;
-                        }
-                    }
-                    else
-                    {
-                        playerStateAndInput.playerstate = new PlayerStateData();
-                        playerStateAndInput.playerstate.playerPos = new PlayerPosData();
-                        return playerStateAndInput;
-                    }
+                    playerStateData = PlayerManager.Instance.player_Dic[msg.playerId].playerState;
+            }
+            else
+            {
+                Console.WriteLine("非法玩家ID,没有TCP注册");
+                playerStateData = new PlayerStateData();
+                playerStateData.hp = 100;
+                playerStateData.playerPos = new PlayerPosData();
+                playerStateAndInput.playerstate = playerStateData;
+                return playerStateAndInput;
+            }
 
-                }
-
-                playerStateData = clientInfo.playerStateData;
+            playerStateData.hp += 1;
 
 
-                playerStateData.hp += 1;
-
-
-                PlayerPos dirPos = new PlayerPos(
+                Position dirPos = new Position(
                     msg.inputdata.Horizontal,
                     msg.inputdata.Jump ? 1 : 0,
                     msg.inputdata.Vertical
                 );
-
-
-                PlayerPos beginPos = new PlayerPos(playerStateData.playerPos);
-
-
+                
+                Position beginPos = new Position(playerStateData.playerPos);
+                
                 UpdateMove(ref beginPos, dirPos, FixedDeltaTime);
-
-
+                
                 playerStateData.playerPos = beginPos.ToPlayerPosData();
-
-
-                clientInfo.playerStateData = playerStateData;
-            }
-            else
-            {
-
-                playerStateData = new PlayerStateData();
-                playerStateData.hp = 100;
-                playerStateData.playerPos = new PlayerPosData();
-            }
-
-
-            playerStateAndInput.playerstate = playerStateData;
-            return playerStateAndInput;
+                playerStateAndInput.playerstate = playerStateData;
+                Position p=new Position(playerStateAndInput.inputdata.ColliderBoxSize);
+                if ((PlayerManager.Instance.GetPlayer(msg.playerId).GetComponent<BoxCollider>() as BoxCollider)!=null)
+                {
+                    (PlayerManager.Instance.GetPlayer(msg.playerId).GetComponent<BoxCollider>() as BoxCollider).Size = p;    
+                }
+                
+                return playerStateAndInput;
         }
         catch (Exception e)
         {
@@ -395,21 +374,19 @@ public class FrameManager
             playerStateAndInput.playerstate.playerPos = new PlayerPosData();
             return playerStateAndInput;
         }
-       
-        
     }
     public long ReadLogicFrame()
     {
         return Interlocked.Read(ref CurrentLogicFrame);
     }
-    public void UpdateMove(ref PlayerPos logicPos, PlayerPos dir, float FixedDeltaTime)
+    public void UpdateMove(ref Position logicPos, Position dir, float FixedDeltaTime)
     {
 
         if (dir.x == 0 && dir.y == 0 && dir.z == 0)
             return;
 
         
-        PlayerPos dirNormalized = new PlayerPos(
+        Position dirNormalized = new Position(
             dir.x, dir.y, dir.z
         );
 
@@ -426,16 +403,16 @@ public class FrameManager
         }
 
        
-        PlayerPos newPos = logicPos + dirNormalized * MoveSpeed * FixedDeltaTime;
+        Position newPos = logicPos + dirNormalized * MoveSpeed * FixedDeltaTime;
 
        
         logicPos = FixFloat(newPos);
     }
-    public PlayerPos FixFloat(PlayerPos pos)
+    public Position FixFloat(Position pos)
     {
         int precision = 1000;
         
-        return new PlayerPos((float)Math.Round(pos.x * precision)/precision, (float)Math.Round(pos.y * precision) / precision, (float)Math.Round(pos.z * precision) / precision);
+        return new Position((float)Math.Round(pos.x * precision)/precision, (float)Math.Round(pos.y * precision) / precision, (float)Math.Round(pos.z * precision) / precision);
     }
 
 }

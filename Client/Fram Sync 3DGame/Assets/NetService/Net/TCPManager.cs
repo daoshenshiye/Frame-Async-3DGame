@@ -47,7 +47,7 @@ public class TCPManager: MonoBehaviour
     public bool buildTCPConnection;
     private float SEND_HEART_MSG_TIME = 5f;
     private const int RetryDelay_MS = 1000; 
-    private const int WaitServerConnection_MS = 2000;
+    private const int WaitServerConnection_MS = 6000;
     private const int MaxRetryAttempts = 5;
     private int currentRetryAttempts = 0;   
     private void Awake()

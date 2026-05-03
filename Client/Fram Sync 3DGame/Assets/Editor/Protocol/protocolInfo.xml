@@ -5,6 +5,7 @@
 		<field access="public" type="float" name="Vertical" />
 		<field access="public" type="float" name="Horizontal" />
 		<field access="public" type="bool" name="Jump" />
+		<field access="public" type="PlayerPosData" name="ColliderBoxSize" />
 	</Data>
 	<Data name="PlayerStateData" namespace="GamePlayer">
 		<field access="public" type="int" name="hp" />

@@ -2,10 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using ClientSocket.Component;
 
 namespace ClientSocket.Tools
 {
-    public class PlayerPos
+    public class Position:BaseComponent
     {
         // 原有的私有字段（保留，兼容原有逻辑）
         private PlayerPosData playerPosData;
@@ -17,7 +18,7 @@ namespace ClientSocket.Tools
 
         #region 新增：x/y/z 构造函数（float 类型核心重载）
         // 1. 核心构造函数：直接传入 float 类型 x/y/z
-        public PlayerPos(float x, float y, float z)
+        public Position(float x, float y, float z)
         {
             this.x = x;
             this.y = y;
@@ -32,7 +33,7 @@ namespace ClientSocket.Tools
         }
 
         // 2. 兼容构造函数：传入 PlayerPosData（直接复用原有数据）
-        public PlayerPos(PlayerPosData posData)
+        public Position(PlayerPosData posData)
         {
             this.x = posData.x;
             this.y = posData.y;
@@ -41,7 +42,7 @@ namespace ClientSocket.Tools
         }
 
         // 3. 无参构造函数（默认初始化为 0.0f）
-        public PlayerPos()
+        public Position()
         {
             x = 0.0f;
             y = 0.0f;
@@ -50,46 +51,46 @@ namespace ClientSocket.Tools
         }
 
         // 4. 简化构造函数：只传 x/z（适配 2D 平面移动，y 默认为 0）
-        public PlayerPos(float x, float z) : this(x, 0.0f, z)
+        public Position(float x, float z) : this(x, 0.0f, z)
         {
         }
         #endregion
 
         #region 核心：运算符重载（+、*、==/!=，适配 float 计算）
-        // 1. 重载 + 运算符：两个 PlayerPos 坐标相加（比如位移叠加）
-        public static PlayerPos operator +(PlayerPos a, PlayerPos b)
+        // 1. 重载 + 运算符：两个 Position 坐标相加（比如位移叠加）
+        public static Position operator +(Position a, Position b)
         {
             // 空值安全校验（避免帧同步中空引用崩溃）
-            if (a == null) return b ?? new PlayerPos();
-            if (b == null) return a ?? new PlayerPos();
+            if (a == null) return b ?? new Position();
+            if (b == null) return a ?? new Position();
 
-            return new PlayerPos(
+            return new Position(
                 a.x + b.x,
                 a.y + b.y,
                 a.z + b.z
             );
         }
 
-        // 2. 重载 * 运算符：PlayerPos × 浮点数值（缩放/移动距离计算）
-        public static PlayerPos operator *(PlayerPos pos, float multiplier)
+        // 2. 重载 * 运算符：Position × 浮点数值（缩放/移动距离计算）
+        public static Position operator *(Position pos, float multiplier)
         {
-            if (pos == null) return new PlayerPos();
+            if (pos == null) return new Position();
 
-            return new PlayerPos(
+            return new Position(
                 pos.x * multiplier,
                 pos.y * multiplier,
                 pos.z * multiplier
             );
         }
 
-        // 3. 重载 * 运算符：数值 × PlayerPos（交换律，方便计算）
-        public static PlayerPos operator *(float multiplier, PlayerPos pos)
+        // 3. 重载 * 运算符：数值 × Position（交换律，方便计算）
+        public static Position operator *(float multiplier, Position pos)
         {
             return pos * multiplier; // 复用已有逻辑，避免重复代码
         }
 
         // 4. 重载 == 运算符：判断两个坐标是否相等（浮点精度容错）
-        public static bool operator ==(PlayerPos a, PlayerPos b)
+        public static bool operator ==(Position a, Position b)
         {
             // 处理 null 情况
             if (ReferenceEquals(a, b)) return true;
@@ -103,7 +104,7 @@ namespace ClientSocket.Tools
         }
 
         // 5. 重载 != 运算符（必须和 == 成对实现）
-        public static bool operator !=(PlayerPos a, PlayerPos b)
+        public static bool operator !=(Position a, Position b)
         {
             return !(a == b);
         }
@@ -112,7 +113,7 @@ namespace ClientSocket.Tools
         #region 规范重写：Equals + GetHashCode（符合 C# 标准）
         public override bool Equals(object obj)
         {
-            return obj is PlayerPos pos && this == pos;
+            return obj is Position pos && this == pos;
         }
 
         public override int GetHashCode()
@@ -135,9 +136,9 @@ namespace ClientSocket.Tools
         }
 
         // 从 PlayerPosData 初始化（接收网络数据后快速转换）
-        public static PlayerPos FromPlayerPosData(PlayerPosData data)
+        public static Position FromPlayerPosData(PlayerPosData data)
         {
-            return new PlayerPos(data);
+            return new Position(data);
         }
         #endregion
 
@@ -145,7 +146,7 @@ namespace ClientSocket.Tools
         public override string ToString()
         {
             // 保留 3 位小数，方便调试帧同步坐标
-            return $"PlayerPos(x:{x:F3}, y:{y:F3}, z:{z:F3})";
+            return $"Position(x:{x:F3}, y:{y:F3}, z:{z:F3})";
         }
         #endregion
     }

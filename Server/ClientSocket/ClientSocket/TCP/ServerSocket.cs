@@ -9,6 +9,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
+using ClientSocket.Physics.Colliders;
+using ClientSocket.ServerPlayer;
 
 namespace ClientSocket.TCP
 {
@@ -54,6 +56,10 @@ namespace ClientSocket.TCP
                     Console.WriteLine("客户端" + clientSocket.ID + "接入");
                     ThreadPool.QueueUserWorkItem((obj) =>
                     {
+                        Player player = new Player(clientSocket.ID);
+                        player.AddComponent<BoxCollider>();
+                        PlayerManager.Instance.AddPlayer(player);
+                        
                         PlayerAccessInfoMsg playerAccess = new PlayerAccessInfoMsg();
                         playerAccess.PlayerId = clientSocket.ID;
                         playerAccess.PlayerNickName = "saberalter";
