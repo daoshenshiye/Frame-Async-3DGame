@@ -12,18 +12,18 @@ using UnityEngine.PlayerLoop;
 using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 using Update = UnityEngine.PlayerLoop.Update;
 
-//重放采用从Queue队列中取元素的方式进行重放
-//流程如下: 玩家输入FixedUpdate获取玩家输入并存入Queue队列中,服务器权威帧下来时进行回滚重放,回滚要保证取出队列中的peak,这一步可以让重放时不会重复执行当前帧操作
-//,然后进行重放把queue中所有元素都执行一遍
+
 public class FrameManager:MonoBehaviour
 {
     private  int FixedFrameRate = 30;
     private float FixedDeltaTime = 0;
     public  float accumulatedFrames = 0;
-    public static long CurrentLogicFrame;
+    public  long CurrentServerLogicFrame;
+    public int ServerDelayBuffer;
+    public  long LocalPredictLogicFrame;
     private Vector3 Localinput;
     public int localExecuteTimes;
-    public long preLogicFrame=0;
+    public long preServerLogicFrame=0;
     public bool shouldSendInput=false;
     private DateTime lastUpdateTime30FPS= DateTime.MinValue;
     private DateTime lastUpdateTime15FPS= DateTime.MinValue;
@@ -32,11 +32,12 @@ public class FrameManager:MonoBehaviour
     public int Counter;
     public double CurrentRTT;
     private DateTime preSendTime = DateTime.MinValue;
-    private float serverframeMs = 1f / 15f;
-    private Queue<InputData> inputHistory=new Queue<InputData>();
-    private Queue<Dictionary<int,PlayerStateData>> stateHistory=new Queue<Dictionary<int,PlayerStateData>>();
-    private Queue<List<ServerInputAndStateData>>  clientFrameInputAndStates=new Queue<List<ServerInputAndStateData>>();
+    private float serverframeSeconds = 1f / 15f;
+    private int serverframeMs = 1000 / 15;
+    private Dictionary<long,Vector3> PredictPlayerInput=new Dictionary<long,Vector3>();
+    private float rollback_tolerance = 1.3f;
     private int HistoryCount = 80;
+    
     //private int netOffset;
     private void Awake()
     {
@@ -50,40 +51,30 @@ public class FrameManager:MonoBehaviour
     {
         try
         {
+            if (PlayerManager.LocalPlayerID != -1 && shouldSendInput)
+            {
+                // TimeSpan elapsed = DateTime.Now - lastUpdateTime30FPS;
+                // if (lastUpdateTime30FPS == DateTime.MinValue || elapsed.TotalSeconds >= FixedDeltaTime)
+                // {
+                //     lastUpdateTime30FPS = DateTime.Now;
+                // }
+                Localinput= InputManager.Instance.GetLocalPlayerInput();
 
+                UpdateView();
+                SaveInputHistory();
+                CleanHistory();
+                SendInputMsgToServer();
+                Localinput=Vector3.zero;
+                ++LocalPredictLogicFrame;
+                print("当前预测帧"+LocalPredictLogicFrame);
+            }
         }
         catch (Exception e)
         {
             print(e.Message);
             print(e.StackTrace);
         }
-        if (PlayerManager.LocalPlayerID != -1 && shouldSendInput)
-        {
-            //TimeSpan elapsed = DateTime.Now - lastUpdateTime30FPS;
-            //if (lastUpdateTime30FPS == DateTime.MinValue || elapsed.TotalSeconds >= FixedDeltaTime)
-            //{
-            //    GetLocalInputs();
-            //    SaveLocalInputHistory(CurrentLogicFrame + 4);
-            //    SaveStateSnapshot(CurrentLogicFrame + 4);
-            //    CleanHistory();
 
-            //    lastUpdateTime30FPS = DateTime.Now;
-            //}
-            Localinput= InputManager.Instance.GetLocalPlayerInput();
-            print(Localinput);
-            SaveStateSnapshot();
-            CleanHistory();
-            UpdateView();
-            SendInputMsgToServer();
-            // lastUpdateTime15FPS = DateTime.Now;
-            // TimeSpan elapsedtime = DateTime.Now - lastUpdateTime15FPS;
-            // if (lastUpdateTime15FPS == DateTime.MinValue || elapsedtime.TotalSeconds >= serverframeMs)
-            // {
-            //
-            //  
-            // }
-
-        }
         
     }
 
@@ -91,90 +82,97 @@ public class FrameManager:MonoBehaviour
     {
         if (LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID)!=null)
         {
-            LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID).view.UpdateView(Localinput, serverframeMs);
+            LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID).view.UpdateView(Localinput, serverframeSeconds);
         }
     }
 
 
 
-    private void SaveStateSnapshot()
+    private void SaveInputHistory()
     {
-        if (Localinput == Vector3.zero)
-            return;
-        
-         List<ServerInputAndStateData> list = new List<ServerInputAndStateData>();
-         list=LogicViewBridge.Instance.GetServerInputAndStateData();
-         if(list!=null)
-         clientFrameInputAndStates.Enqueue(list);      
-     
+        PredictPlayerInput[LocalPredictLogicFrame] = Localinput;
     }
     private void CleanHistory()
     {
-        if (clientFrameInputAndStates.Count>=HistoryCount)
+        if (PredictPlayerInput.Count>=HistoryCount)
         {
-            for (int i = 0; i <HistoryCount/2 ; i++)
+            List<long> sortedKeys =new List<long>();
+            sortedKeys.AddRange(PredictPlayerInput.Keys.ToList());
+            sortedKeys.Sort();
+            for (int i=0;i<sortedKeys.Count/2;i++)
             {
-                clientFrameInputAndStates.TryDequeue(out List<ServerInputAndStateData> list);
+                PredictPlayerInput.Remove(sortedKeys[i]);
             }
         }
     }
     private void RollBack(ServerFrameAuthenMsg msg)
     {
         long serverFrame = msg.serLogicFrame;
+
+        if (CheckStateCorrect(msg))
+        {
+            return;
+        }
+
+        print("执行了重放");
         foreach (var item in msg.ServerInputStateData)
         {
-            LogicAndView logicAndView = LogicViewBridge.Instance.GetPlayerLogicAndView(item.playerId);
-            if (logicAndView == null) continue;
-
-            if (logicAndView.logic.playerId!=PlayerManager.LocalPlayerID)
+            if (item.playerId==PlayerManager.LocalPlayerID)
             {
-                print("其他玩家移动了");
-                ++Counter;
-            }
-            if (logicAndView.logic.playerId == PlayerManager.LocalPlayerID)
-            {
-                print("本地玩家移动了");
-                ++Counter;
-            }
-            Vector3 serverPos = new Vector3(
-               item.playerstate.playerPos.x,
-               item.playerstate.playerPos.y,
-               item.playerstate.playerPos.z
-           );
-
-                logicAndView.logic.HP = item.playerstate.hp;
-                logicAndView.logic.LogicPos=serverPos;
+                var logicView = LogicViewBridge.Instance.GetPlayerLogicAndView(item.playerId);
+                if (logicView == null) break;
             
-           
+                Vector3 serverPos = new Vector3(
+                    item.playerstate.playerPos.x,
+                    item.playerstate.playerPos.y,
+                    item.playerstate.playerPos.z
+                );
+                logicView.logic.LogicPos=serverPos;
+                logicView.view.HP = item.playerstate.hp;
+                ReplayUnconfirmedInputs(serverFrame);
+                break;
+            }
         }
-        if (Counter == 1)
+    }
+
+    private bool CheckStateCorrect(ServerFrameAuthenMsg msg)
+    {
+        foreach (var item in msg.ServerInputStateData)
         {
-            print("只有一个玩家移动");
+            if (item.playerId==PlayerManager.LocalPlayerID)
+            {
+                var playerPos = LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID).logic.LogicPos;
+                var serverPos = item.playerstate.playerPos;
+                Vector3 serverVector3=new Vector3(serverPos.x,serverPos.y,serverPos.z);
+              float dist=  Vector3.Distance(serverVector3, playerPos);
+              return dist <=rollback_tolerance;
+            }
         }
-        Counter = 0;
-        clientFrameInputAndStates.TryDequeue(out List<ServerInputAndStateData> list);
+        return true;
     }
     private void ReplayUnconfirmedInputs(long serverFrame)
     {
-        
-        while (clientFrameInputAndStates.TryDequeue(out List<ServerInputAndStateData> list))
+        var confirmedKeys = PredictPlayerInput.Keys.Where(k => k <= serverFrame).ToList();
+        foreach (var key in confirmedKeys)
         {
-            foreach (var v in list)
+            PredictPlayerInput.Remove(key);
+        }
+        foreach (var input in PredictPlayerInput)
+        {
+            if (input.Key>serverFrame)
             {
-                if (v.playerId == PlayerManager.LocalPlayerID)
-                {
-                    print("执行了重放");
-                    LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID)
-                        .logic.UpdateMove(new Vector3(v.inputdata.Horizontal,v.inputdata.Jump?1:0 ,v.inputdata.Vertical),serverframeMs);
-                }
+                print("执行了重放");
+                
+                LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID)
+                    .logic.UpdateMove(input.Value,serverframeSeconds);
             }
         }
     }
-
+    
     public void UpdateLogicFrame(ServerFrameAuthenMsg msg)
     {
         
-        if (msg.serLogicFrame <= preLogicFrame)
+        if (msg.serLogicFrame <= preServerLogicFrame)
         {
             return;
         }
@@ -185,37 +183,31 @@ public class FrameManager:MonoBehaviour
             TimeSpan elapsed = DateTime.Now - preSendTime;
             CurrentRTT = elapsed.TotalMilliseconds;
         }
-
-
-       
+        int rttFrames = Mathf.CeilToInt((float)CurrentRTT / serverframeMs); 
+        long targetPredict = CurrentServerLogicFrame + rttFrames + ServerDelayBuffer+1;
+        LocalPredictLogicFrame = targetPredict;
+        LogicViewBridge.Instance.SyncAllState(msg);
         RollBack(msg);
 
-        CurrentLogicFrame = msg.serLogicFrame;
-      
-        ExecuteLogic(CurrentLogicFrame);
-
-
-        ReplayUnconfirmedInputs(msg.serLogicFrame);
-
-        LogicViewBridge.Instance.SyncAllPlayerView();
+        CurrentServerLogicFrame = msg.serLogicFrame;
         //LocallogicView?.view.SyncPosWithServer();
         
-        preSendTime = DateTime.Now;
+        
 
-        preLogicFrame = CurrentLogicFrame;
+        preServerLogicFrame = CurrentServerLogicFrame;
         
     }
 
     private void SendInputMsgToServer()
     {
         if (TCPManager.Instance.isConnected
-         && PlayerManager.LocalPlayerID != -1&&Localinput!=Vector3.zero)
+         && PlayerManager.LocalPlayerID != -1)
         {
             
             if(Localinput!=Vector3.zero)
             UdpManager.Instance.Counter++;
             print("发送了有效消息");
-
+            preSendTime = DateTime.Now;
             InputMessage inputMessage = new InputMessage();
             inputMessage.PlayerId = PlayerManager.LocalPlayerID;
             
@@ -238,10 +230,13 @@ public class FrameManager:MonoBehaviour
            inputMessage.input.ColliderBoxSize.x = size.x;
            inputMessage.input.ColliderBoxSize.y = size.y;
            inputMessage.input.ColliderBoxSize.z = size.z;
+           inputMessage.PredictFrame = LocalPredictLogicFrame;
             UdpManager.Instance.UDPSend(inputMessage);
-            Localinput=Vector3.zero;   
+            
         }
     }
+    
+    #region 执行输入.目前版本网络同步不需要客户端计算位置
     public void ExecuteLogic(long LogicFrame)
     {
         if(!InputManager.Instance.playerInputs.ContainsKey(LogicFrame))
@@ -253,17 +248,19 @@ public class FrameManager:MonoBehaviour
         foreach (var item in otherInput)
         {
 
-           LogicAndView logicAndView= LogicViewBridge.Instance.GetPlayerLogicAndView(item.Key);
+            LogicAndView logicAndView= LogicViewBridge.Instance.GetPlayerLogicAndView(item.Key);
             if(logicAndView==null)
             {
                 continue;
             }
 
-            logicAndView.logic.UpdateMove(item.Value, serverframeMs);
+            logicAndView.logic.UpdateMove(item.Value, serverframeSeconds);
         }
 
         InputManager.Instance.RemoveFrameVisitorInput(LogicFrame);
         ++localExecuteTimes;
         print("执行了移动逻辑");
     }
+    #endregion
+  
 }

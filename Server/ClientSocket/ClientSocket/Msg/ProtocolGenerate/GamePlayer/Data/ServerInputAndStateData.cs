@@ -3,8 +3,8 @@ using System.Text;
 namespace GamePlayer{
 		public class ServerInputAndStateData:BaseData{
 		public  int playerId;
-		public InputData  inputdata;
-		public PlayerStateData  playerstate;
+		public  InputData inputdata;
+		public  PlayerStateData playerstate;
 		public override int GetBytesNum()
 		{
 		int num=0;

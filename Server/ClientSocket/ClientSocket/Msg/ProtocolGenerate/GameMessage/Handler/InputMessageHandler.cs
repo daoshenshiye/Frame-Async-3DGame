@@ -5,19 +5,35 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Runtime.InteropServices;
 namespace GameMessage{
+        public class ClientInput
+        {
+            public int  playerId;
+            public long predictFrame;
+            public PlayerStateData state;
+            public InputData input;
+        }
 		public class InputMessageHandler:BaseHandler{
         //private static int player1;
         //private static int player2;
+       
 		public override void HandlerDo(){
 			GameMessage.InputMessage message=msg as  GameMessage.InputMessage;
             if (message != null) {
-                ServerInputAndStateData servermsg= SaveInputData(message);
-
+                ClientInput ClientInput= LoadInputData(message);
+                // Console.WriteLine($"===收到输入===");
+                // Console.WriteLine($"PlayerId={message.PlayerId}");
+                // Console.WriteLine($"PredictFrame={message.PredictFrame}");
+                // Console.WriteLine($"H={message.input.Horizontal}, V={message.input.Vertical}");
+                // Console.WriteLine($"存入服务端帧: {ClientInput.predictFrame/2}");
                 // use thread-safe GetOrAdd to obtain per-player queue and enqueue the input
-                var q = MainClass.frameManager.playerInputs.GetOrAdd(message.PlayerId, _ => new ConcurrentQueue<ServerInputAndStateData>());
-                q.Enqueue(servermsg);
-                //Console.WriteLine("有同帧输入");
                 
+                var frameDict = MainClass.frameManager.frameInputBuffer.GetOrAdd(
+                    ClientInput.predictFrame,
+                   new ConcurrentDictionary<int, ClientInput>()
+                );
+                frameDict[message.PlayerId] = ClientInput;
+                //Console.WriteLine("有同帧输入");
+                // Console.WriteLine($"缓冲区帧{ClientInput.predictFrame/2}现在有{frameDict.Count}个玩家");
             }
             
             
@@ -75,12 +91,13 @@ namespace GameMessage{
             //    MainClass.frameManager.UpdatePreLogicFrame(currentLogicFrame);
 
         }
-        public ServerInputAndStateData SaveInputData(InputMessage msg)
+        public ClientInput LoadInputData(InputMessage msg)
         {
-            ServerInputAndStateData playerStateAndInput = new ServerInputAndStateData();
-            playerStateAndInput.inputdata = msg.input;
-            playerStateAndInput.playerId = msg.PlayerId;
-            return playerStateAndInput;
+            ClientInput clientinput = new ClientInput();
+            clientinput.input = msg.input;
+            clientinput.playerId = msg.PlayerId;
+            clientinput.predictFrame = msg.PredictFrame;
+            return clientinput;
         }
        
     }

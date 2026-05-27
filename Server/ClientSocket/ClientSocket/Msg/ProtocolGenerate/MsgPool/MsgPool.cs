@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
 namespace GameMsg{
 		public class MsgPool{
 		 public static Dictionary<int,Type> ID_Dic= new Dictionary<int,Type>();

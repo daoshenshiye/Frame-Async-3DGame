@@ -174,11 +174,11 @@ namespace ClientSocket.UDP
                                         // }
 
                                         UDPConnectionBuildMsg msg = new UDPConnectionBuildMsg();
+                                        msg.DelayBufferFrame = FrameManager.DelayBufferFrames;
+                                        msg.ServerLogicFrame = MainClass.frameManager.ReadLogicFrame();
                                         MainClass.udpserver.SendMessage(msg,
                                             MainClass.udpserver.GetIPEndPointFromClientDic(ipaddr),
                                             E_UDP_MSG_TYPE.SIMPLE);
-
-
                                     }
                                     else if (baseHandler.msg is HeartMsg)
                                     {

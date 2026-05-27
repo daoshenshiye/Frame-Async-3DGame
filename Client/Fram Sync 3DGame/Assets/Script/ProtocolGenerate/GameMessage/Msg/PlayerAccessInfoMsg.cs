@@ -1,3 +1,7 @@
+using GamePlayer;
+using GamePlayer;
+using GamePlayer;
+using GamePlayer;
 using System.Collections.Generic;
 using System.Text;
 namespace GameMessage{
@@ -8,18 +12,17 @@ namespace GameMessage{
 		public  string password;
 		public override int GetBytesNum()
 		{
-            int num = 0;
-            num += 4;
-            num += 4;
-            num += 4;
-            num += 4;
-            num += Encoding.UTF8.GetByteCount(PlayerNickName);
-            num += 4;
-            num += Encoding.UTF8.GetByteCount(username);
-            num += 4;
-            num += Encoding.UTF8.GetByteCount(password);
-
-            return num;
+		int num=0;
+		num+=4;
+		num+=4;
+		num+=4;
+		num+=4;
+		num+=Encoding.UTF8.GetByteCount(PlayerNickName);
+		num+=4;
+		num+=Encoding.UTF8.GetByteCount(username);
+		num+=4;
+		num+=Encoding.UTF8.GetByteCount(password);
+		return num;
 		}
 		public override byte[] Writting()
 		{

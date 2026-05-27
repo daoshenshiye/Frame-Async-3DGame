@@ -29,9 +29,6 @@ public class Main : MonoBehaviour
             GameObject gameObject = new GameObject("NETUDP");
             gameObject.AddComponent<UdpManager>();
             UdpManager.Instance.InitUdp();
-
         }
-
-
     }
 }

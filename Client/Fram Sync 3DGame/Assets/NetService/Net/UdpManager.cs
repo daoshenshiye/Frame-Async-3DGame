@@ -147,7 +147,6 @@ public class UdpManager: MonoBehaviour
                         socket.SendTo(bytes, new IPEndPoint(IPAddress.Parse(UDPSERVER_IP), UDPSERVER_port));
                     }
 
-
                 }
                 else
                 {

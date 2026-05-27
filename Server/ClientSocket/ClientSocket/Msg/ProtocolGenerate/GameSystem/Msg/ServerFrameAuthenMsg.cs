@@ -38,9 +38,7 @@ namespace GameSystem{
 		int index=beginIndex;
 		serLogicFrame=ReadLong(bytes,ref index);
 				ServerInputStateData=new List<ServerInputAndStateData>();
-			int Count = ReadInt(bytes, ref index);
-
-        for (int i=0;i< Count; i++)
+		for(int i=0;i<ReadInt(bytes,ref index);i++)
 		{
 			ServerInputAndStateData temp=ReadData<ServerInputAndStateData>(bytes,ref index);
 		ServerInputStateData.Add(temp);

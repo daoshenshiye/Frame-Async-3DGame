@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using GamePlayer;
+using GameSystem;
 using UnityEngine;
 public class LogicAndView { 
 public PlayerLogic logic;
@@ -27,6 +28,7 @@ public class LogicViewBridge
             return instance;
         }
     }
+    
     public  Dictionary<int, LogicAndView> PlayerLV_Dic = new Dictionary<int, LogicAndView>();
     public  void AddPlayer(int playerId,PlayerLogic Plogic,PlayerView Pview)
     {
@@ -108,11 +110,21 @@ public class LogicViewBridge
         return null;
     }
 
-    public void SyncAllPlayerView()
+    public void SyncAllState(ServerFrameAuthenMsg msg)
     {
-        foreach (LogicAndView item in PlayerLV_Dic.Values)
+        foreach (var v in msg.ServerInputStateData)
         {
-            item.view.SyncHP();
+            LogicAndView logv= GetPlayerLogicAndView(v.playerId);
+            
+                
+            if (logv != null)
+            {
+                var ServerPos=new Vector3(v.playerstate.playerPos.x,v.playerstate.playerPos.y,v.playerstate.playerPos.z);
+                logv.view.HP = v.playerstate.hp;
+                logv.logic.LogicPos =ServerPos;
+            }       
+            
+         
         }
     }
     

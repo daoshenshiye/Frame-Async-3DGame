@@ -9,27 +9,72 @@ using System.Runtime.Remoting.Messaging;
 using System.Xml;
 using Unity.VisualScripting;
 using UnityEngine;
-namespace i {
-    public enum d {
-        s,
-        m
-    
-    }
-
-
-}
 public class GenerateCSharpScript
 {
     private static string SAVE_PATH= Application.dataPath + "/Script/ProtocolGenerate/";
+    private static string SERVER_PATH= "D:\\unity-Git\\Frame Async 3DGame\\Frame Async 3DGame\\Server\\ClientSocket\\ClientSocket" + "\\Msg\\ProtocolGenerate\\";
+
+    public static void WriteScript(string clientOrserver,string path,string serverpath,string name,string script)
+    {
+        if (name.Contains("Handler"))
+        {
+            if (clientOrserver.Contains("c"))
+            {
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+                path+= name + ".cs";
+                if(!File.Exists(path))
+                File.WriteAllText(path, script);   
+            }
+
+            if (clientOrserver.Contains("s"))
+            {
+                if (!Directory.Exists(serverpath))
+                {
+                    Directory.CreateDirectory(serverpath);
+                }
+                serverpath+= name + ".cs";
+                if(!File.Exists(path))
+                File.WriteAllText(serverpath, script);
+            }
+        }
+        else
+        {
+            if (clientOrserver.Contains("c"))
+            {
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+                path+= name + ".cs";
+                File.WriteAllText(path, script);   
+            }
+
+            if (clientOrserver.Contains("s"))
+            {
+                if (!Directory.Exists(serverpath))
+                {
+                    Directory.CreateDirectory(serverpath);
+                }
+                serverpath+= name + ".cs";
+                File.WriteAllText(serverpath, script);
+            }  
+        }
+       
+    }
     public static void GenerateEnum(XmlNodeList enumNodes)
     {
 
         string nameSpace = "";
         string name = "";
+        string clientOrserver = "";
         string fieldStr = "";
         foreach (XmlNode enumNode in enumNodes) {
             nameSpace = enumNode.Attributes["namespace"].Value;                
             name= enumNode.Attributes["name"].Value;
+            clientOrserver=enumNode.Attributes["clientOrserver"].Value;
               XmlNodeList fields=enumNode.SelectNodes("field");
             fieldStr = "";
             foreach (XmlNode field in fields)
@@ -45,15 +90,8 @@ public class GenerateCSharpScript
                                                     "\t\t" + $"public enum {name}" + "{\r\n" +
                                                                                         "\t\t" + fieldStr + "}" + "\r\n}";
             string path = SAVE_PATH + nameSpace + "/Enum/";
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            path+= name + ".cs";
-            if(!File.Exists(path))
-            {
-                File.WriteAllText(path, script);
-            }
+            string serverpath=SERVER_PATH+nameSpace+"/Enum/";
+            WriteScript(clientOrserver,path,serverpath,name,script);
         }
     }
     public static void GenerateData(XmlNodeList enumNodes) {
@@ -63,10 +101,12 @@ public class GenerateCSharpScript
         string byteNumStr = "";
         string WrittingStr = "";
         string ReadingStr = "";
+        string clientOrserver = "";
         foreach (XmlNode enumNode in enumNodes)
         {
             nameSpace = enumNode.Attributes["namespace"].Value;
             name = enumNode.Attributes["name"].Value;
+            clientOrserver=enumNode.Attributes["clientOrserver"].Value;
             XmlNodeList fields = enumNode.SelectNodes("field");
             fieldStr = "";
             byteNumStr = "";
@@ -130,15 +170,8 @@ public class GenerateCSharpScript
                                                                                       ReadingStr+ "return index-beginIndex;\r\n\t\t}\r\n\t\t"
                                                                                       + "}" + "\r\n}";
             string path = SAVE_PATH + nameSpace + "/Data/";
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            path += name + ".cs";
-            if (!File.Exists(path))
-            {
-                File.WriteAllText(path, script);
-            }
+            string serverpath=SERVER_PATH+nameSpace+"/Data/";
+            WriteScript(clientOrserver, path, serverpath, name, script);
         }
     }
     public static void GenerateMsg(XmlNodeList MsgNodes)
@@ -149,6 +182,7 @@ public class GenerateCSharpScript
         string byteNumStr = "";
         string WrittingStr = "";
         string ReadingStr = "";
+        string clientOrserver = "";
         string id = "";
         string MsgPoolScript = "using System;\r\nusing System.Collections;\r\nusing System.Collections.Generic;\r\nusing UnityEngine;\r\n"+$"namespace GameMsg" + "{" + "\r\n" +
                                                   "\t\t" + $"public class MsgPool" + "{\r\n\t\t" +
@@ -166,6 +200,7 @@ public class GenerateCSharpScript
             nameSpace = enumNode.Attributes["namespace"].Value;
             name = enumNode.Attributes["name"].Value;
             id= enumNode.Attributes["id"].Value;
+            clientOrserver= enumNode.Attributes["clientOrserver"].Value;
             XmlNodeList fields = enumNode.SelectNodes("field");
             fieldStr = "";
             byteNumStr = "";
@@ -180,8 +215,9 @@ public class GenerateCSharpScript
             ReadingStr += "public override int Reading(byte[] bytes,int beginIndex=0)\r\n\t\t{\r\n" +
                 "\t\t" + "int index=beginIndex;\r\n\t\t";
            
-            GenerateHandler(enumNode, nameSpace);
+            GenerateHandler(enumNode, nameSpace,clientOrserver);
             GenerateMsgPool(ref MsgPoolScript,id,name,nameSpace);
+            string script = "";
             foreach (XmlNode field in fields)
             {
                 GetBytesNumStr(ref byteNumStr, field);
@@ -217,6 +253,7 @@ public class GenerateCSharpScript
                 else
                 {
                     fieldStr += type+" ";
+                    script += "using GamePlayer;\r\n";
                 }
                 fieldStr += field.Attributes["name"].Value;
                 if (field.InnerText != "")
@@ -226,7 +263,7 @@ public class GenerateCSharpScript
                 fieldStr += ";\r\n\t\t";
             }
 
-            string script = "using System.Collections.Generic;\r\nusing System.Text;\r\n" + $"namespace {nameSpace}" + "{" + "\r\n" +
+            script+="using System.Collections.Generic;\r\nusing System.Text;\r\n" + $"namespace {nameSpace}" + "{" + "\r\n" +
                                                     "\t\t" + $"public class {name}:BaseMsg" + "{\r\n" +
                                                                                         "\t\t" + fieldStr
                                                                                       + byteNumStr + "return num;\r\n\t\t}\r\n" +
@@ -236,64 +273,30 @@ public class GenerateCSharpScript
                                                                                         + "}" + "\r\n}";
            
             string path = SAVE_PATH + nameSpace + "/Msg/";
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            path += name + ".cs";
-            if (!File.Exists(path))
-            {
-                File.WriteAllText(path, script);
-                
-            }
-          
-          
-        
+            string serverpath = SERVER_PATH + nameSpace + "/Msg/";
+            WriteScript(clientOrserver, path, serverpath, name, script);
         }
         MsgPoolScript += "\r\n\t\t\t\t}\r\n\t\t}\r\n}";
         string path2 = SAVE_PATH + "MsgPool/";
-        if (!Directory.Exists(path2))
-        {
-            Directory.CreateDirectory(path2);
-        }
-        path2 += "MsgPool" + ".cs";
-        if (File.Exists(path2))
-        {
-            File.Delete(path2);
-        }
-        if (!File.Exists(path2))
-        {
-            File.WriteAllText(path2, MsgPoolScript);
-
-        }
+        string serverpath2 = SERVER_PATH + "MsgPool/";
+        WriteScript(clientOrserver, path2, serverpath2, "MsgPool", MsgPoolScript);
     }
-    public static void GenerateHandler(XmlNode field,string nameSpace)
+    public static void GenerateHandler(XmlNode field,string nameSpace,string clientOrserver)
     {
         string name=field.Attributes["name"].Value;
-        
 
         string HandlerScript = $"namespace {nameSpace}" + "{" + "\r\n" +
                                                     "\t\t" + $"public class {name}Handler:BaseHandler" + "{\r\n\t\t" +
                                                         "public override void HandlerDo(){" + nameSpace + "." + $"{name} message=msg as  " +nameSpace + "."+ name +";"+"}\r\n\t\t"
                                                         +"}\r\n}";
         string path = SAVE_PATH + nameSpace + "/Handler/";
-        if (!Directory.Exists(path))
-        {
-            Directory.CreateDirectory(path);
-        }
-        path += name+"Handler" + ".cs";
-        if (!File.Exists(path))
-        {
-            File.WriteAllText (path, HandlerScript);
-        }
+        string severpath = SERVER_PATH + nameSpace + "/Handler/";
+        WriteScript(clientOrserver, path, severpath, name+"Handler", HandlerScript);
     }
     public static void GenerateMsgPool(ref string MsgPoolScript,string id, string name, string nameSpace)
     {
 
         MsgPoolScript += $"    Register({id},typeof(" + nameSpace +"."+ name + "),typeof(" + nameSpace + "." + name + "Handler" + "));\r\n";
-
-
-
     }
     private static void GetBytesNumStr(ref string byteNumStr, XmlNode field)
     {

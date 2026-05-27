@@ -1,9 +1,9 @@
+using GamePlayer;
 using System.Collections.Generic;
 using System.Text;
 namespace GameSystem{
 		public class UdpAckMsg:BaseMsg{
 		public  long seq;
-		
 		public override int GetBytesNum()
 		{
 		int num=0;

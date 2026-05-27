@@ -1,73 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <messages>
-	<Data name="InputData" namespace="GamePlayer">
+	<Data name="InputData" namespace="GamePlayer" clientOrserver="cs">
 		<field access="public" type="int" name="playerId" />
 		<field access="public" type="float" name="Vertical" />
 		<field access="public" type="float" name="Horizontal" />
 		<field access="public" type="bool" name="Jump" />
 		<field access="public" type="PlayerPosData" name="ColliderBoxSize" />
 	</Data>
-	<Data name="PlayerStateData" namespace="GamePlayer">
+	<Data name="PlayerStateData" namespace="GamePlayer" clientOrserver="cs">
 		<field access="public" type="int" name="hp" />
 		<field access="public" type="PlayerPosData" name="playerPos" />
 	</Data>
-	<Data name="PlayerPosData" namespace="GamePlayer" >
+	<Data name="PlayerPosData" namespace="GamePlayer" clientOrserver="cs" >
 		<field access="public" type="float" name="x" />
 		<field access="public" type="float" name="y" />
 		<field access="public" type="float" name="z" />
 	</Data>
-	<Data name="ServerInputAndStateData" namespace="GamePlayer" >
+	<Data name="ServerInputAndStateData" namespace="GamePlayer" clientOrserver="cs">
 		<field access="public" type="int" name="playerId" />
 		<field access="public" type="InputData" name="inputdata" />
 		<field access="public" type="PlayerStateData" name="playerstate" />
 	</Data>
 
-	<message id="307" name="RoomCreateMsg" namespace="GamePlayer" >
+	<message id="307" name="RoomCreateMsg" namespace="GamePlayer" clientOrserver="cs" >
 		<field access="public" type="int" name="roomId" />
 		<field access="public" type="int" name="playerId" />
 		<field access="public" type="bool" name="success" />
 	</message>
 	
-	<message id="305" name="PlayerEnterRoomMsg" namespace="GamePlayer" >
+	<message id="305" name="PlayerEnterRoomMsg" namespace="GamePlayer" clientOrserver="cs">
 			<field access="public" type="int" name="playerId" />
 			<field access="public" type="int" name="roomId" />
 			<field access="public" type="bool" name="success" />
 	</message>
-	<message id="306" name="PlayerExitRoomMsg" namespace="GamePlayer" >
+	<message id="306" name="PlayerExitRoomMsg" namespace="GamePlayer" clientOrserver="cs">
 			<field access="public" type="int" name="playerId" />
 			<field access="public" type="int" name="roomId" />
 			<field access="public" type="bool" name="success" />
 	</message>
-	<message id="202" name="QuitMessage" namespace="GameSystem" >	
+	<message id="202" name="QuitMessage" namespace="GameSystem" clientOrserver="cs">	
 	</message>
-	<message id="140" name="InputMessage" namespace="GameMessage">
+	<message id="140" name="InputMessage" namespace="GameMessage" clientOrserver="cs">
 		<field access="public" type="int" name="PlayerId" />
+		<field access="public" type="long" name="PredictFrame" />
 		<field access="public" type="InputData" name="input" />
 	</message>
-	<message id="505" name="HeartMsg" namespace="GameSystem" />
-	<message id="404" name="UdpAckMsg" namespace="GameSystem">
+	<message id="505" name="HeartMsg" namespace="GameSystem" clientOrserver="cs"/>
+	<message id="404" name="UdpAckMsg" namespace="GameSystem" clientOrserver="cs">
 		<field access="public" type="long" name="seq"/>
 	</message>
-	<message id="450" name="PlayerAccessInfoMsg" namespace="GameMessage">
+	<message id="450" name="PlayerAccessInfoMsg" namespace="GameMessage" clientOrserver="cs">
 		<field access="public" type="int" name="PlayerId" />
 		<field access="public" type="string" name="PlayerNickName" />
 		<field access="public" type="string" name="username" />
 		<field access="public" type="string" name="password" />
 	</message>
-	<message id="466" name="UdpPlayerAddMsg" namespace="GameMessage" >
+	<message id="466" name="UdpPlayerAddMsg" namespace="GameMessage" clientOrserver="cs">
 		<field access="public" type="int" name="playerId" />
-		
 		<field access="public" type="PlayerStateData" name="playerstate" />
 	</message>
-	<message id="451" name="PlayerCharacterCreateMsg" namespace="GameMessage">
+	<message id="451" name="PlayerCharacterCreateMsg" namespace="GameMessage" clientOrserver="cs">
 			<field access="public" type="int" name="PlayerId" />
 	</message>
-	<message id="452" name="PlayerCharacterDestroyMsg" namespace="GameMessage">
+	<message id="452" name="PlayerCharacterDestroyMsg" namespace="GameMessage" clientOrserver="cs">
 			<field access="public" type="int" name="PlayerId" />
 	</message>
-	<message id="453" name="UDPConnectionBuildMsg" namespace="GameSystem" />
-	<message id="205" name="TCPConnectionBuildMsg" namespace="GameSystem" />
-	<message id="101" name="ServerFrameAuthenMsg" namespace="GameSystem" >
+	<message id="453" name="UDPConnectionBuildMsg" namespace="GameSystem" clientOrserver="cs">
+		<field access="public" type="long" name="ServerLogicFrame" />
+		<field access="public" type="int" name="DelayBufferFrame" />
+	</message>
+	<message id="205" name="TCPConnectionBuildMsg" namespace="GameSystem" clientOrserver="cs"/>
+	<message id="101" name="ServerFrameAuthenMsg" namespace="GameSystem" clientOrserver="cs">
 		<field access="public" type="long" name="serLogicFrame" />
 		<field access="public" type="list" T="ServerInputAndStateData" name="ServerInputStateData" />
 	</message>
