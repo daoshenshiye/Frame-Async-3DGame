@@ -43,6 +43,7 @@ public void Register(int id,Type MsgType,Type HandlerType)
     Register(453,typeof(GameSystem.UDPConnectionBuildMsg),typeof(GameSystem.UDPConnectionBuildMsgHandler));
     Register(205,typeof(GameSystem.TCPConnectionBuildMsg),typeof(GameSystem.TCPConnectionBuildMsgHandler));
     Register(101,typeof(GameSystem.ServerFrameAuthenMsg),typeof(GameSystem.ServerFrameAuthenMsgHandler));
+    Register(449,typeof(GameSystem.UDPPingMsg),typeof(GameSystem.UDPPingMsgHandler));
 
 				}
 		}

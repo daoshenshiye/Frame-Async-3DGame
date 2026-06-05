@@ -24,6 +24,7 @@ namespace ClientSocket.TCP
         public Dictionary<int, Dictionary<int, ClientSocket>> rooms;
         private List<ClientSocket> DelClientSockets;
         public bool ShouldOpenThread;
+        private Thread AcceptThread;
         public  ServerSocket(string ip,int port)
         {
             rooms= new Dictionary<int, Dictionary<int, ClientSocket>>();
@@ -32,9 +33,8 @@ namespace ClientSocket.TCP
             this.ip=ip;
             this.port=port;
             ShouldOpenThread = true;
-            
-            ThreadPool.QueueUserWorkItem(Accept);
-            
+            AcceptThread = new Thread(Accept);
+            AcceptThread.Start();
         }
         public void Accept( object obj)
         {
@@ -42,13 +42,11 @@ namespace ClientSocket.TCP
             socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
             //socket.Bind(new IPEndPoint(IPAddress.Parse(ip),port));
             socket.Bind(new IPEndPoint(IPAddress.Parse(ip), port));
-            socket.Listen(100);
-           
+            socket.Listen(512);
             while (ShouldOpenThread)
             {
                 try
                 {
-                   
                    Socket client= socket.Accept();
                     Console.WriteLine("客户端接入，远端：" + client.RemoteEndPoint);
                     ClientSocket clientSocket = new ClientSocket(client);
@@ -59,6 +57,9 @@ namespace ClientSocket.TCP
                         Player player = new Player(clientSocket.ID);
                         player.AddComponent<BoxCollider>();
                         PlayerManager.Instance.AddPlayer(player);
+                       
+                        TCPConnectionBuildMsg tcpConnect = new TCPConnectionBuildMsg();
+                        clientSocket.SendMessage(tcpConnect);
                         
                         PlayerAccessInfoMsg playerAccess = new PlayerAccessInfoMsg();
                         playerAccess.PlayerId = clientSocket.ID;
@@ -66,15 +67,13 @@ namespace ClientSocket.TCP
                         playerAccess.username = "saber";
                         playerAccess.password = "alter";
                         clientSocket.SendMessage(playerAccess);
-                        TCPConnectionBuildMsg tcpConnect = new TCPConnectionBuildMsg();
-                        clientSocket.SendMessage(tcpConnect);
+                       
                     });
                 }
                 catch(Exception e)
                 {
                   Console.WriteLine(e.Message);
-                    Console.WriteLine(e.StackTrace);
-
+                  Console.WriteLine(e.StackTrace);
                 }
             }
         }

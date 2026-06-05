@@ -22,6 +22,7 @@ public class Main : MonoBehaviour
             GameObject gameObject = new GameObject("NETTCP");
             gameObject.AddComponent<TCPManager>();
         }
+        
         TCPManager.Instance.ConnectWith("119.84.246.217", 36252);
         print("网络服务开启");
         if (UdpManager.Instance == null)

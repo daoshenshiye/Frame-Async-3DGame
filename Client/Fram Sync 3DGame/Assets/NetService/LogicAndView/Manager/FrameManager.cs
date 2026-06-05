@@ -4,12 +4,14 @@ using GameSystem;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
+using Debug = UnityEngine.Debug;
 using Update = UnityEngine.PlayerLoop.Update;
 
 
@@ -31,13 +33,11 @@ public class FrameManager:MonoBehaviour
     public static FrameManager Instance => instance;
     public int Counter;
     public double CurrentRTT;
-    private DateTime preSendTime = DateTime.MinValue;
     private float serverframeSeconds = 1f / 15f;
     private int serverframeMs = 1000 / 15;
     private Dictionary<long,Vector3> PredictPlayerInput=new Dictionary<long,Vector3>();
     private float rollback_tolerance = 1.3f;
     private int HistoryCount = 80;
-    
     //private int netOffset;
     private void Awake()
     {
@@ -85,9 +85,7 @@ public class FrameManager:MonoBehaviour
             LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID).view.UpdateView(Localinput, serverframeSeconds);
         }
     }
-
-
-
+    
     private void SaveInputHistory()
     {
         PredictPlayerInput[LocalPredictLogicFrame] = Localinput;
@@ -178,22 +176,16 @@ public class FrameManager:MonoBehaviour
         }
         
         print("进入了");
-        if (preSendTime != DateTime.MinValue)
-        {
-            TimeSpan elapsed = DateTime.Now - preSendTime;
-            CurrentRTT = elapsed.TotalMilliseconds;
-        }
-        int rttFrames = Mathf.CeilToInt((float)CurrentRTT / serverframeMs); 
-        long targetPredict = CurrentServerLogicFrame + rttFrames + ServerDelayBuffer+1;
+        int rttFrames = Mathf.CeilToInt((float)(CurrentRTT * 1000) / serverframeMs);
+        Debug.LogWarning($"当前RTT: {CurrentRTT:F3}秒 ({CurrentRTT*1000:F1}ms), 约{rttFrames}帧");
+        long targetPredict = CurrentServerLogicFrame + rttFrames +1;
         LocalPredictLogicFrame = targetPredict;
         LogicViewBridge.Instance.SyncAllState(msg);
         RollBack(msg);
-
+        
         CurrentServerLogicFrame = msg.serLogicFrame;
         //LocallogicView?.view.SyncPosWithServer();
         
-        
-
         preServerLogicFrame = CurrentServerLogicFrame;
         
     }
@@ -207,7 +199,6 @@ public class FrameManager:MonoBehaviour
             if(Localinput!=Vector3.zero)
             UdpManager.Instance.Counter++;
             print("发送了有效消息");
-            preSendTime = DateTime.Now;
             InputMessage inputMessage = new InputMessage();
             inputMessage.PlayerId = PlayerManager.LocalPlayerID;
             
@@ -231,8 +222,10 @@ public class FrameManager:MonoBehaviour
            inputMessage.input.ColliderBoxSize.y = size.y;
            inputMessage.input.ColliderBoxSize.z = size.z;
            inputMessage.PredictFrame = LocalPredictLogicFrame;
+           UDPPingMsg pingMsg = new UDPPingMsg();
+           pingMsg.SendTime = Stopwatch.GetTimestamp();
             UdpManager.Instance.UDPSend(inputMessage);
-            
+            UdpManager.Instance.UDPSend(pingMsg,E_UDP_MSG_TYPE.SIMPLE);
         }
     }
     

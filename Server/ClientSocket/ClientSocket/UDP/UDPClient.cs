@@ -168,10 +168,10 @@ namespace ClientSocket.UDP
                                         UdpPlayerAddMsg udpAdd = baseHandler.msg as UdpPlayerAddMsg;
                                         playerID = udpAdd.playerId;
                                         Console.WriteLine("玩家成功加入UDP" + playerID);
-                                        // if (!MainClass.udpserver.ClientPID_TO_Addr_Dic.ContainsKey(playerID))
-                                        // {
-                                        //     MainClass.udpserver.ClientPID_TO_Addr_Dic.Add(playerID, ipaddr);
-                                        // }
+                                        if (!MainClass.udpserver.ClientPID_TO_Addr_Dic.ContainsKey(playerID))
+                                        {
+                                            MainClass.udpserver.ClientPID_TO_Addr_Dic.Add(playerID, ipaddr);
+                                        }
 
                                         UDPConnectionBuildMsg msg = new UDPConnectionBuildMsg();
                                         msg.DelayBufferFrame = FrameManager.DelayBufferFrames;
@@ -213,10 +213,10 @@ namespace ClientSocket.UDP
 
 
                                 
-                                // if (baseHandler.msg is GameMessage.InputMessage inputMsg)
-                                // {
-                                //     MainClass.udpserver.ClientPID_TO_Addr_Dic[inputMsg.PlayerId] = ipaddr;
-                                // }
+                                if (baseHandler.msg is GameMessage.InputMessage inputMsg)
+                                {
+                                    MainClass.udpserver.ClientPID_TO_Addr_Dic[inputMsg.PlayerId] = ipaddr;
+                                }
 
 
 

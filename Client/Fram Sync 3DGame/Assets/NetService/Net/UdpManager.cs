@@ -167,12 +167,12 @@ public class UdpManager: MonoBehaviour
         
             while (shouldOpenUdp)
             {
-                    int Length = socket.ReceiveFrom(bytes, ref remoteEndPoint);
-            if (Length>0)
-            {
+                int Length = socket.ReceiveFrom(bytes, ref remoteEndPoint);
+                if (Length>0)
+                {
 
-                HandleReceive(Length, bytes);
-            }
+                    HandleReceive(Length, bytes);
+                }
 
             }
     }
@@ -213,12 +213,8 @@ public class UdpManager: MonoBehaviour
                 nowIndex += 4;
                 msgLength = BitConverter.ToInt32(chacheBytes, nowIndex);
                 nowIndex += 4;
-                if (msgLength >= 63)
-                {
-                    System.Diagnostics.Debugger.Break();
-                }
 
-                //print("ID:" + ID + "len" + msgLength+"nowSeq"+nowSeq);
+                // print("ID:" + ID + "len" + msgLength+"nowSeq"+nowSeq);
                 if (chacheNum - nowIndex >= msgLength && msgLength != -1)
                 {
                     BaseMsg baseMsg = null;
@@ -229,6 +225,10 @@ public class UdpManager: MonoBehaviour
                         baseMsg.Reading(chacheBytes, nowIndex);
                         BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
                         baseHandler.msg = baseMsg;
+                        if (baseMsg.GetID() == 449)
+                        {
+                            print("收到了RTT消息");
+                        }
                         if (type == 0)
                         {
 

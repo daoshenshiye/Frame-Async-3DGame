@@ -34,7 +34,7 @@ namespace ClientSocket.UDP
     public class UDPServer
     {
         public Dictionary<string, UDPClient> UDP_Client_Dic = new Dictionary<string, UDPClient>();
-        // public Dictionary<int,string> ClientPID_TO_Addr_Dic= new Dictionary<int,string>();
+        public Dictionary<int,string> ClientPID_TO_Addr_Dic= new Dictionary<int,string>();
         public  Dictionary<long, Dictionary<string,AckPackage>> AckDic= new Dictionary<long, Dictionary<string, AckPackage>>();
         private  Socket socket;
         private bool isRunning = false;

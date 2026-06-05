@@ -40,16 +40,43 @@ public class TCPManager: MonoBehaviour
     private int chacheNum;
     Queue<BaseHandler> receiveQueue = new Queue<BaseHandler>();
     Queue<BaseMsg> sendQueue= new Queue<BaseMsg>();
+    private bool isconnected;
     public bool isConnected
     {
-        get { return socket != null && socket.Connected; }
+        get
+        {
+            isconnected=socket!=null&&socket.Connected;
+            return isconnected;
+        }
+            private    set    
+            {
+                isconnected = value;
+            }
     }
-    public bool buildTCPConnection;
+
+    private bool buildTCPConnection;
+
+    public bool BuildTCPConnection
+    {
+        get { return buildTCPConnection; }
+        set
+        {
+            buildTCPConnection = value;
+            if (SendThread!=null)
+            {
+                SendThread.Start();
+            }
+        }
+    }
     private float SEND_HEART_MSG_TIME = 5f;
     private const int RetryDelay_MS = 1000; 
-    private const int WaitServerConnection_MS = 6000;
+    private const int WaitServerConnection_MS = 10000;
+    private const int WaitClientConnection_MS = 8000;
     private const int MaxRetryAttempts = 5;
     private int currentRetryAttempts = 0;   
+    private Task ConnectTask;
+    private Thread SendThread;
+    private Thread ReceiveThread;
     private void Awake()
     {
         instance = this;
@@ -86,40 +113,33 @@ public class TCPManager: MonoBehaviour
         }
         
         IPEndPoint iPEndPoint=new IPEndPoint(IPAddress.Parse(ip), port);
-      socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
-        try
+        if (socket==null)
         {
-            var connectTask = socket.ConnectAsync(ip, port);
-            if (await Task.WhenAny(connectTask, Task.Delay(3000)) != connectTask)
+            socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
+        }
+        try
+        {   
+            if(!socket.Connected)
+            ConnectTask = socket.ConnectAsync(ip, port);
+            if (await Task.WhenAny(ConnectTask, Task.Delay(WaitClientConnection_MS)) != ConnectTask)
             {
-                Close(); 
-                throw new Exception("连接超时,进行尝试");
+                if (!socket.Connected)
+                {
+                    Close();
+                    throw new Exception("连接超时,进行尝试");
+                }
             }
-
-            
-            if (!socket.Connected)
-            {
-               Close();
-                print("连接失败");
-                throw new Exception("连接失败,进行重连");
-            }
-            else
-            {
-                print("连接成功, local=" + socket.LocalEndPoint + " remote=" + socket.RemoteEndPoint);
-                print("连接成功");
-                ThreadPool.QueueUserWorkItem(SendMesg);
-                ThreadPool.QueueUserWorkItem(ReceiveMesg);
-                
-            }
-
-            if (currentRetryAttempts>0&&socket.Connected)
-            {
-                Task.Delay(WaitServerConnection_MS);
-            }
+            print("连接成功, local=" + socket.LocalEndPoint + " remote=" + socket.RemoteEndPoint);
+            print("连接成功");
+            SendThread=new Thread(SendMesg);
+            ReceiveThread=new Thread(ReceiveMesg);
+            isConnected = true;
+            ReceiveThread.Start();
+            await Task.Delay(WaitServerConnection_MS);
             if (!buildTCPConnection)
             {
-                
-                throw new Exception("与游戏服务器未取得联系");
+                Close();
+                throw new Exception("连接成功,但未建立TCP连接,进行重连");
             }
         }
         catch(Exception e)
@@ -147,7 +167,7 @@ public class TCPManager: MonoBehaviour
     }
     private void SendMesg(object obj)
     {
-      while(isConnected)
+      while(isconnected&&buildTCPConnection)
         {
             try
             {
@@ -190,9 +210,9 @@ public class TCPManager: MonoBehaviour
                     socket.Shutdown(SocketShutdown.Both);
                     socket.Close();
                 }
-               
+                
                 socket = null;
-
+                
             }
             catch (Exception e) {
                 print(e.Message);
@@ -209,38 +229,17 @@ public class TCPManager: MonoBehaviour
             try
             { 
                     
-                    int Length = socket.Receive(bytes);
+                int Length = socket.Receive(bytes);
                 if (Length<=0)
                 {
                     break;
                 }
-                    HandleReceive(bytes, Length);
-
-                    #region 老版本的收消息switch-case
-
-                    //int index = 0;
-                    //int msgID = BitConverter.ToInt32(dataContainer, 0);
-                    //index += 4;
-                    //BaseMsg basemsg = new BaseMsg();
-                    //switch (msgID)
-                    //{
-                    //    case 100:
-                    //        PlayerMsg playerMsg = new PlayerMsg();
-                    //        playerMsg.Reading(dataContainer, index);
-                    //        basemsg=playerMsg;
-
-                    //        break;
-                    //    default:
-                    //        break;
-                    //}
-                    //if(basemsg==null)
-                    //{
-                    //    continue;
-                    //}
-                    //receiveQueue.Enqueue(basemsg);
-
-                    #endregion
-                  
+                
+                HandleReceive(bytes, Length);
+                
+               
+                Thread.Sleep(1);
+                
                 
             }
             catch (Exception e)
@@ -254,6 +253,7 @@ public class TCPManager: MonoBehaviour
     {
         try
         {
+            print("进入了TCP消息处理");
             int nowindex = 0;
             int ID = 0;
             int msgLength = 0;
@@ -303,6 +303,7 @@ public class TCPManager: MonoBehaviour
                     BaseMsg baseMsg = MsgPool.Instance.GetMsg(ID);
                     if (baseMsg != null)
                     {
+                        print("收到了TCP消息");
                         baseMsg.Reading(chacheBytes, nowindex);
                         BaseHandler handler = MsgPool.Instance.GetHandler(ID);
                         handler.msg = baseMsg;

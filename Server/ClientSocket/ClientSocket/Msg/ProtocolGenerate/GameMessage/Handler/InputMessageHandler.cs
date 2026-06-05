@@ -97,6 +97,7 @@ namespace GameMessage{
             clientinput.input = msg.input;
             clientinput.playerId = msg.PlayerId;
             clientinput.predictFrame = msg.PredictFrame;
+            
             return clientinput;
         }
        
