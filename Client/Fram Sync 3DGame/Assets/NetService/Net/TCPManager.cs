@@ -141,6 +141,7 @@ public class TCPManager: MonoBehaviour
                 Close();
                 throw new Exception("连接成功,但未建立TCP连接,进行重连");
             }
+            
         }
         catch(Exception e)
         {
@@ -183,10 +184,15 @@ public class TCPManager: MonoBehaviour
                     Thread.Sleep(10);
                 }
             }
-            catch(Exception e)
+            catch (SocketException e)
             {
-                print(e.Message);
-                print(e.StackTrace);
+                Debug.LogError(e.InnerException);
+                Debug.LogError(e.SocketErrorCode);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e.Message);
+                Debug.LogError(e.StackTrace);
             }
            
         }
@@ -221,7 +227,7 @@ public class TCPManager: MonoBehaviour
           
         }
     }
-    private void ReceiveMesg(object obj)
+    private void ReceiveMesg()
     {
         byte[] bytes = new byte[1024 * 5];
         while (isConnected)
@@ -237,17 +243,21 @@ public class TCPManager: MonoBehaviour
                 
                 HandleReceive(bytes, Length);
                 
-               
                 Thread.Sleep(1);
-                
-                
+            }
+            catch (SocketException e)
+            {
+                Debug.LogError(e.InnerException);
+                Debug.LogError(e.SocketErrorCode);
+                Debug.LogError(e.StackTrace);
             }
             catch (Exception e)
             {
-                print(e.Message);
-                print(e.StackTrace);
+                Debug.LogError(e.Message);
+                Debug.LogError(e.StackTrace);
             }
         }
+        
     }
     public void HandleReceive(byte[] bytes,int receiveLength)
     {

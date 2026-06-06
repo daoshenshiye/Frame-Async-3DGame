@@ -38,6 +38,8 @@ public class FrameManager:MonoBehaviour
     private Dictionary<long,Vector3> PredictPlayerInput=new Dictionary<long,Vector3>();
     private float rollback_tolerance = 1.3f;
     private int HistoryCount = 80;
+
+    private int DelayPredictFrame = 1;
     //private int netOffset;
     private void Awake()
     {
@@ -112,7 +114,7 @@ public class FrameManager:MonoBehaviour
             return;
         }
 
-        print("执行了重放");
+        print("执行了回滚");
         foreach (var item in msg.ServerInputStateData)
         {
             if (item.playerId==PlayerManager.LocalPlayerID)
@@ -176,12 +178,12 @@ public class FrameManager:MonoBehaviour
         }
         
         print("进入了");
-        int rttFrames = Mathf.CeilToInt((float)CurrentRTT/ serverframeMs);
-        Debug.LogWarning($"当前RTT: {CurrentRTT:F3}毫秒 ({CurrentRTT:F1}ms), 约{rttFrames}帧");
-        long targetPredict = CurrentServerLogicFrame + rttFrames +1;
-        LocalPredictLogicFrame = targetPredict;
         LogicViewBridge.Instance.SyncAllState(msg);
         RollBack(msg);
+        
+        int rttFrames = Mathf.CeilToInt((float)CurrentRTT/ serverframeMs);
+        Debug.LogWarning($"当前RTT: {CurrentRTT:F3}毫秒 ({CurrentRTT:F1}ms), 约{rttFrames}帧");
+        LocalPredictLogicFrame = CurrentServerLogicFrame + ServerDelayBuffer + DelayPredictFrame;
         
         CurrentServerLogicFrame = msg.serLogicFrame;
         //LocallogicView?.view.SyncPosWithServer();
@@ -205,22 +207,9 @@ public class FrameManager:MonoBehaviour
             inputMessage.input = new GamePlayer.InputData();
             inputMessage.input.Horizontal = Localinput.x;
             inputMessage.input.Vertical = Localinput.z;
-            Vector3 size;
-            if (PlayerManager.Instance.GetPlayerInfo(PlayerManager.LocalPlayerID)!=null)
-            {
-                size= PlayerManager.Instance.GetPlayerInfo(PlayerManager.LocalPlayerID)
-                    .player_instance.GetComponent<BoxCollider>().size;      
-            }
-            else
-            {
-                size=Vector3.zero;
-                print("无法获取玩家信息");
-            }
-           inputMessage.PredictFrame = LocalPredictLogicFrame;
-           UDPPingMsg pingMsg = new UDPPingMsg();
-           pingMsg.SendTime = Stopwatch.GetTimestamp();
+            inputMessage.PredictFrame = LocalPredictLogicFrame;
+            inputMessage.input.Jump = Localinput.y > 0;
             UdpManager.Instance.UDPSend(inputMessage);
-            UdpManager.Instance.UDPSend(pingMsg,E_UDP_MSG_TYPE.SIMPLE);
         }
     }
     

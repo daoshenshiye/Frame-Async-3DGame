@@ -192,21 +192,17 @@ namespace ClientSocket.TCP
                                 PlayerCharacterCreateMsg playerCharacterCreateMsg = new PlayerCharacterCreateMsg();
                                 playerCharacterCreateMsg.PlayerId = playerID;
                                 playerCharacterCreateMsg.BirthPos = enterRoomPlayer.Position.ToPlayerPosData();
-                                PlayerEnterRoomMsg enterRoomMsg1 = new PlayerEnterRoomMsg();
-                                enterRoomMsg1.playerId = playerID;
-                                enterRoomMsg1.roomId = roomId;
-                                enterRoomMsg1.success = true;
+                            
                                 
                                 clientSockets[item.Key].SendMessage(playerCharacterCreateMsg);
-                                clientSockets[item.Key].SendMessage(enterRoomMsg1);
+                                
                                 
                                 PlayerCharacterCreateMsg playermsg = new PlayerCharacterCreateMsg();
                                 playermsg.PlayerId = item.Key;
                                 playermsg.BirthPos = inRoomPlayer.Position.ToPlayerPosData();
-                                enterRoomMsg1.playerId = item.Key;
+                                
                                 
                                 clientSockets[playerID].SendMessage(playermsg);
-                                clientSockets[playerID].SendMessage(enterRoomMsg1);
                             }
                         }
                     }

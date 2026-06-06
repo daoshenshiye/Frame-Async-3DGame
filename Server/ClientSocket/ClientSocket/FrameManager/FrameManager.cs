@@ -23,7 +23,7 @@ public class FrameManager
     private static long CurrentLogicFrame=DelayBufferFrames + 1;
     private float accumulatedFrameTime=0;
     private bool shouldOpenLogic = false;
-    public const int DelayBufferFrames = 2;
+    public const int DelayBufferFrames = 3;
     public ConcurrentDictionary<long, ConcurrentDictionary<int, ClientInput>> frameInputBuffer = new();
     public ConcurrentDictionary<int,long> SendTimeBuffer = new();
     private List<ServerInputAndStateData> inputs=new List<ServerInputAndStateData>();
@@ -58,7 +58,6 @@ public class FrameManager
                 // 延迟缓冲：当前推进到帧N，但实际执行帧N-2
                 long executeFrame = ReadLogicFrame() - DelayBufferFrames;
                 
-                
                 ServerFrameAuthenMsg serverLogicFrame = new ServerFrameAuthenMsg();
                 serverLogicFrame.serLogicFrame = executeFrame;
                 
@@ -68,16 +67,6 @@ public class FrameManager
                 serverLogicFrame.ServerInputStateData = inputs.Count > 0 ? inputs : new List<ServerInputAndStateData>();
                 
                 MainClass.udpserver.BroadCastMsg(serverLogicFrame, E_UDP_MSG_TYPE.ORDER_STEADY);
-                
-                foreach (var v in SendTimeBuffer)
-                {
-                    UDPPingMsg udpPingMsg = new UDPPingMsg();
-                    udpPingMsg.playerId = v.Key;
-                    udpPingMsg.SendTime = v.Value;
-                    MainClass.udpserver.SendMessage(udpPingMsg,
-                        MainClass.udpserver.GetIPEndPointFromClientDic(MainClass.udpserver.ClientPID_TO_Addr_Dic[v.Key])
-                        ,E_UDP_MSG_TYPE.SIMPLE);
-                }
                 
                 List<long> removeList=new List<long>();
                 foreach (var frame in frameInputBuffer)
@@ -98,7 +87,6 @@ public class FrameManager
                     
                 }
                 catch (Exception e) {
-            
                     Console.WriteLine(e.Message);
                     Console.WriteLine(e.StackTrace);
                     Console.WriteLine(e);
@@ -110,23 +98,38 @@ public class FrameManager
 
     public void CollectPlayerInputs(long executeFrame)
     {
-                // 收集 executeFrame 的所有玩家输入
-               // List<long> sortedFrameKeys = frameInputBuffer.Keys.ToList();
-               //  sortedFrameKeys.Sort();
-               //  if(sortedFrameKeys.Count>0)
-               //  if (sortedFrameKeys[^1]<executeFrame)
-               //  {
-                    // Console.WriteLine($"警告：当前执行帧{executeFrame}的输入还没有到齐," +
-                    //                   $" 当前缓冲区最大帧是{sortedFrameKeys[^1]}");
-                // }
+                //收集 executeFrame 的所有玩家输入
+               List<long> sortedFrameKeys = frameInputBuffer.Keys.ToList();
+                sortedFrameKeys.Sort();
+                if(sortedFrameKeys.Count>0)
+                if (sortedFrameKeys[^1]<executeFrame)
+                {
+                    Console.WriteLine($"警告：当前执行帧{executeFrame}的输入还没有到齐," +
+                                      $" 当前缓冲区最大帧是{sortedFrameKeys[^1]}");
+                }
+
+                if (sortedFrameKeys.Count != 0)
+                {
+                    foreach (var v in frameInputBuffer[sortedFrameKeys[^1]].Keys)
+                    {
+                        Console.Write($"玩家{v}:"+ frameInputBuffer[sortedFrameKeys[^1]][v].predictFrame +",");
+                    }
+                    Console.Write("当前服务器执行帧"+(ReadLogicFrame()-DelayBufferFrames));
+                    
+                }
+                
                 var frameInputs = new Dictionary<int, ClientInput>();
                 if (frameInputBuffer.ContainsKey(executeFrame))
                 {
-                    
+                    Console.WriteLine();
+                    Console.Write("当前服务器正在执行的玩家ID为:");
                     foreach (var kvp in frameInputBuffer[executeFrame])
                     {
                         frameInputs[kvp.Key] = kvp.Value;
+                        Console.Write(kvp.Key+",");
                     }
+                    Console.WriteLine();
+                    Console.WriteLine("============================================================");
                 }
                 
                 // 补空输入：遍历所有在线玩家，没到齐的补空输入

@@ -14,25 +14,17 @@
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Fram Sync 3DGame/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Fram Sync 3DGame/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Editor/Protocol/protocolInfo.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Editor/Protocol/protocolInfo.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Manager/FrameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Manager/FrameManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/PlayerCharacterCreateMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/PlayerCharacterCreateMsgHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Msg/PlayerCharacterCreateMsg.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Msg/PlayerCharacterCreateMsg.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GamePlayer/Data/InputData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GamePlayer/Data/InputData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UDPPingMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UDPPingMsgHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Component/BaseComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Component/BaseComponent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/NetService/Net/TCPManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/Net/TCPManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UDPPingMsgHandler.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UDPPingMsgHandler.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Msg/UDPPingMsg.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Msg/UDPPingMsg.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/MsgPool/MsgPool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/MsgPool/MsgPool.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/FrameManager/FrameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/FrameManager/FrameManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/MonoBehaviour/Mono.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/MonoBehaviour/Mono.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Handler/InputMessageHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Handler/InputMessageHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Msg/PlayerCharacterCreateMsg.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Msg/PlayerCharacterCreateMsg.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GamePlayer/Data/InputData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GamePlayer/Data/InputData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/Colliders/BaseCollider.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/Colliders/BaseCollider.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/Colliders/BoxCollider.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/Colliders/BoxCollider.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/PhysicsWorld.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/PhysicsWorld.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/ServerPlayer/Player.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/ServerPlayer/Player.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/ServerPlayer/PlayerManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/ServerPlayer/PlayerManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameSystem/Handler/UDPPingMsgHandler.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameSystem/Msg/UDPPingMsg.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/MsgPool/MsgPool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/MsgPool/MsgPool.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/ServerSocket.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/ServerSocket.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Tools/Position.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Tools/Vector3.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPClient.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPServer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPServer.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.exe" afterDir="false" />
     </list>
@@ -103,6 +95,9 @@
     <urls />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="SWEA" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 8
@@ -204,7 +199,7 @@
       <workItem from="1779641616704" duration="4048000" />
       <workItem from="1779856845775" duration="19266000" />
       <workItem from="1780645600521" duration="27012000" />
-      <workItem from="1780736074397" duration="5778000" />
+      <workItem from="1780736074397" duration="14522000" />
     </task>
     <servers />
   </component>
@@ -237,19 +232,6 @@
           <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
           <option name="timeStamp" value="3" />
         </breakpoint>
-        <line-breakpoint type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Assets/NetService/Net/TCPManager.cs</url>
-          <line>255</line>
-          <properties documentPath="D:\unity-Git\Frame Async 3DGame\Frame Async 3DGame\Client\Fram Sync 3DGame\Assets\NetService\Net\TCPManager.cs" containingFunctionPresentation="方法 'HandleReceive'">
-            <startOffsets>
-              <option value="6465" />
-            </startOffsets>
-            <endOffsets>
-              <option value="6485" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="12" />
-        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>

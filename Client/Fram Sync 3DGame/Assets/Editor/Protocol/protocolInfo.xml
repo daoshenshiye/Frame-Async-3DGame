@@ -74,8 +74,4 @@
 		<field access="public" type="long" name="serLogicFrame" />
 		<field access="public" type="list" T="ServerInputAndStateData" name="ServerInputStateData" />
 	</message>
-	<message id="449" name="UDPPingMsg" namespace="GameSystem" clientOrserver="cs" >
-			<field access="public" type="long"  name="SendTime" />
-			<field access="public" type="int"  name="playerId" />
-	</message>
 </messages>
