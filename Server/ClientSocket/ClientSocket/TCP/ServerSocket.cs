@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using ClientSocket.Physics.Colliders;
 using ClientSocket.ServerPlayer;
+using ClientSocket.Tools;
 
 namespace ClientSocket.TCP
 {
@@ -54,10 +55,6 @@ namespace ClientSocket.TCP
                     Console.WriteLine("客户端" + clientSocket.ID + "接入");
                     ThreadPool.QueueUserWorkItem((obj) =>
                     {
-                        Player player = new Player(clientSocket.ID);
-                        player.AddComponent<BoxCollider>();
-                        PlayerManager.Instance.AddPlayer(player);
-                       
                         TCPConnectionBuildMsg tcpConnect = new TCPConnectionBuildMsg();
                         clientSocket.SendMessage(tcpConnect);
                         
@@ -171,37 +168,47 @@ namespace ClientSocket.TCP
                     {
                         rooms[roomId].Add(playerID, clientSockets[playerID]);
                         Console.WriteLine("玩家" + playerID + "进入了房间,房间号为" + roomId);
-                        foreach (var item in rooms[roomId])
-                        {
-                            if (item.Key != playerID)
-                            {
-
-                                PlayerCharacterCreateMsg playerCharacterCreateMsg = new PlayerCharacterCreateMsg();
-                                playerCharacterCreateMsg.PlayerId = playerID;
-
-                                PlayerEnterRoomMsg enterRoomMsg1 = new PlayerEnterRoomMsg();
-                                enterRoomMsg1.playerId = playerID;
-                                enterRoomMsg1.roomId = roomId;
-                                enterRoomMsg1.success = true;
-
-                                clientSockets[item.Key].SendMessage(playerCharacterCreateMsg);
-                                clientSockets[item.Key].SendMessage(enterRoomMsg1);
-                                PlayerCharacterCreateMsg playermsg = new PlayerCharacterCreateMsg();
-                                playermsg.PlayerId = item.Key;
-
-                                enterRoomMsg1.playerId = item.Key;
-                                clientSockets[playerID].SendMessage(playermsg);
-                                clientSockets[playerID].SendMessage(enterRoomMsg1);
-                            }
-                        }
+                        
+                        Vector3 birthPos = new Vector3(0, 0, 0);
+                        Player player = new Player(playerID,birthPos);
+                        player.AddComponent<BoxCollider>();
+                        
                         PlayerCharacterCreateMsg playermsg1 = new PlayerCharacterCreateMsg();
                         playermsg1.PlayerId = playerID;
+                        playermsg1.BirthPos = player.Position.ToPlayerPosData();
+                        
                         clientSockets[playerID].SendMessage(playermsg1);
                         PlayerEnterRoomMsg enterRoomMsg = new PlayerEnterRoomMsg();
                         enterRoomMsg.success = true;
                         enterRoomMsg.playerId = playerID;
                         enterRoomMsg.roomId = roomId;
                         clientSockets[playerID].SendMessage(enterRoomMsg);
+                        foreach (var item in rooms[roomId])
+                        {
+                            if (item.Key != playerID)
+                            {
+                               Player enterRoomPlayer= PlayerManager.Instance.GetPlayer(playerID);
+                               Player inRoomPlayer = PlayerManager.Instance.GetPlayer(item.Key);
+                                PlayerCharacterCreateMsg playerCharacterCreateMsg = new PlayerCharacterCreateMsg();
+                                playerCharacterCreateMsg.PlayerId = playerID;
+                                playerCharacterCreateMsg.BirthPos = enterRoomPlayer.Position.ToPlayerPosData();
+                                PlayerEnterRoomMsg enterRoomMsg1 = new PlayerEnterRoomMsg();
+                                enterRoomMsg1.playerId = playerID;
+                                enterRoomMsg1.roomId = roomId;
+                                enterRoomMsg1.success = true;
+                                
+                                clientSockets[item.Key].SendMessage(playerCharacterCreateMsg);
+                                clientSockets[item.Key].SendMessage(enterRoomMsg1);
+                                
+                                PlayerCharacterCreateMsg playermsg = new PlayerCharacterCreateMsg();
+                                playermsg.PlayerId = item.Key;
+                                playermsg.BirthPos = inRoomPlayer.Position.ToPlayerPosData();
+                                enterRoomMsg1.playerId = item.Key;
+                                
+                                clientSockets[playerID].SendMessage(playermsg);
+                                clientSockets[playerID].SendMessage(enterRoomMsg1);
+                            }
+                        }
                     }
                 }
                 else
@@ -244,6 +251,7 @@ namespace ClientSocket.TCP
                     exitRoomMsg.success = true;
                     exitRoomMsg.playerId = playerID;
                     exitRoomMsg.roomId = roomId;
+                    PlayerManager.Instance.DeletePlayer(playerID);
                     if (clientSockets.ContainsKey(playerID))
                     {
                         clientSockets[playerID].SendMessage(exitRoomMsg);
@@ -264,8 +272,6 @@ namespace ClientSocket.TCP
                 Console.WriteLine(e.Message);
                 Console.WriteLine(e.StackTrace);
             }
-           
-           
         }
         public void DestroyRoom(int roomId)
         {

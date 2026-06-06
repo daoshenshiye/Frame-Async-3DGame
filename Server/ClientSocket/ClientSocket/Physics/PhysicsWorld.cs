@@ -52,26 +52,30 @@ public class PhysicsWorld
                     BaseCollider otherCollider = colliders[j] as BaseCollider;
                     if (colliders[i].IsColliding(colliders[j]))
                     {
-                        if (collider.Collding == false)
+                        if (!collider.ColiddingColliders.ContainsKey(otherCollider.Guid))
                         {
                             collider.Owner.OnCollisionEnter(otherCollider);
                             otherCollider.Owner.OnCollisionEnter(collider);
+                            collider.ColiddingColliders.Add(otherCollider.Guid, otherCollider);
+                            otherCollider.ColiddingColliders.Add(collider.Guid, collider);
                         }
-                        collider.Collding = true;
-                        otherCollider.Collding = true;
+                        else
+                        {
+                            collider.Owner.OnCollisionStay(otherCollider);
+                            otherCollider.Owner.OnCollisionStay(collider);
+                        }
                     }
                     else
                     {
-                        if (collider.Collding==true)
+                        if (collider.ColiddingColliders.ContainsKey(otherCollider.Guid))
                         {
                             collider.Owner.OnCollisionExit(otherCollider);
                             otherCollider.Owner.OnCollisionExit(collider);
+                            collider.ColiddingColliders.Remove(otherCollider.Guid);
+                            otherCollider.ColiddingColliders.Remove(collider.Guid);
                         }
-                        collider.Collding = false;
-                        otherCollider.Collding = false;
                     }
                 }
             }
         }
-    
 }

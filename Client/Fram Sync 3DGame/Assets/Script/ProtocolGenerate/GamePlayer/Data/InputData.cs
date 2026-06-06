@@ -6,7 +6,6 @@ namespace GamePlayer{
 		public  float Vertical;
 		public  float Horizontal;
 		public  bool Jump;
-		public  PlayerPosData ColliderBoxSize;
 		public override int GetBytesNum()
 		{
 		int num=0;
@@ -14,7 +13,6 @@ namespace GamePlayer{
 		num+=4;
 		num+=4;
 		num+=1;
-		num+=ColliderBoxSize.GetBytesNum();
 		return num;
 		}
 		public override byte[] Writting()
@@ -25,7 +23,6 @@ namespace GamePlayer{
 		WriteFloat(bytes,Vertical,ref index);
 		WriteFloat(bytes,Horizontal,ref index);
 		WriteBool(bytes,Jump,ref index);
-		WriteData(bytes,ColliderBoxSize,ref index);
 		return bytes;
 		}
 		public override int Reading(byte[] bytes,int beginIndex=0)
@@ -35,7 +32,6 @@ namespace GamePlayer{
 		Vertical=ReadFloat(bytes,ref index);
 		Horizontal=ReadFloat(bytes,ref index);
 		Jump=ReadBool(bytes,ref index);
-		ColliderBoxSize=ReadData<PlayerPosData>(bytes,ref index);
 		return index-beginIndex;
 		}
 		}

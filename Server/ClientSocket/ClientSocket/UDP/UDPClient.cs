@@ -4,6 +4,8 @@ using GamePlayer;
 using GameSystem;
 using System;
 using System.Collections.Concurrent;
+using ClientSocket.ServerPlayer;
+
 namespace ClientSocket.UDP
 {
     public enum E_UDP_MSG_TYPE
@@ -148,13 +150,10 @@ namespace ClientSocket.UDP
                         //    //}
 
                         //}
-                        
-
                         #endregion
                       
                         if (baseMsg != null)
                         {
-
                             baseMsg.Reading(chacheBytes, nowIndex);
                             BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
                             baseHandler.msg = baseMsg;
@@ -168,11 +167,12 @@ namespace ClientSocket.UDP
                                         UdpPlayerAddMsg udpAdd = baseHandler.msg as UdpPlayerAddMsg;
                                         playerID = udpAdd.playerId;
                                         Console.WriteLine("玩家成功加入UDP" + playerID);
+                                        PlayerManager.Instance.GetPlayer(playerID).SetState(udpAdd.playerstate);
                                         if (!MainClass.udpserver.ClientPID_TO_Addr_Dic.ContainsKey(playerID))
                                         {
                                             MainClass.udpserver.ClientPID_TO_Addr_Dic.Add(playerID, ipaddr);
                                         }
-
+                                        
                                         UDPConnectionBuildMsg msg = new UDPConnectionBuildMsg();
                                         msg.DelayBufferFrame = FrameManager.DelayBufferFrames;
                                         msg.ServerLogicFrame = MainClass.frameManager.ReadLogicFrame();
@@ -191,9 +191,6 @@ namespace ClientSocket.UDP
                                         MainClass.udpserver.simpleMsgQueue.Enqueue(baseHandler);
                                     }
                                 }
-
-
-
                             }
                             else if (type == 1)
                             {
@@ -210,8 +207,6 @@ namespace ClientSocket.UDP
                                 //    catch { }
 
                                 // If this message contains a player id (e.g. InputMessage), update the server mapping
-
-
                                 
                                 if (baseHandler.msg is GameMessage.InputMessage inputMsg)
                                 {

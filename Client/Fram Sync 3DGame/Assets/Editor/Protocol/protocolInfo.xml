@@ -5,7 +5,6 @@
 		<field access="public" type="float" name="Vertical" />
 		<field access="public" type="float" name="Horizontal" />
 		<field access="public" type="bool" name="Jump" />
-		<field access="public" type="PlayerPosData" name="ColliderBoxSize" />
 	</Data>
 	<Data name="PlayerStateData" namespace="GamePlayer" clientOrserver="cs">
 		<field access="public" type="int" name="hp" />
@@ -61,6 +60,7 @@
 	</message>
 	<message id="451" name="PlayerCharacterCreateMsg" namespace="GameMessage" clientOrserver="cs">
 			<field access="public" type="int" name="PlayerId" />
+			<field access="public" type="PlayerPosData" name="BirthPos" />
 	</message>
 	<message id="452" name="PlayerCharacterDestroyMsg" namespace="GameMessage" clientOrserver="cs">
 			<field access="public" type="int" name="PlayerId" />

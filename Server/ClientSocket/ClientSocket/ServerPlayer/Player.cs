@@ -8,7 +8,6 @@ namespace ClientSocket.ServerPlayer;
 
 public class Player:Mono
 {
-    
     public PlayerStateData  playerState;
     public string layer;
     public string tag;
@@ -21,22 +20,29 @@ public class Player:Mono
         Start();
         playerState = new PlayerStateData();
         playerState.playerPos = new PlayerPosData();
-        playerState.playerPos.x = position.x;
-        playerState.playerPos.y= position.y;
-        playerState.playerPos.z = position.z;
+        playerState.playerPos.x = Position.x;
+        playerState.playerPos.y= Position.y;
+        playerState.playerPos.z = Position.z;
     }
 
-    public Player(int id)
+    public Player(int id,Vector3 playerPos)
     {
         this.id = id;
         Start();
+        SetPosition(playerPos);
         playerState = new PlayerStateData();
         playerState.playerPos = new PlayerPosData();
-        playerState.playerPos.x = position.x;
-        playerState.playerPos.y= position.y;
-        playerState.playerPos.z = position.z;
+        playerState.playerPos.x = Position.x;
+        playerState.playerPos.y= Position.y;
+        playerState.playerPos.z = Position.z;
+        PlayerManager.Instance.AddPlayer(this);
+        
     }
 
+    public void DestroyPlayer()
+    {
+        PlayerManager.Instance.DeletePlayer(id);
+    }
     protected override void Update()
     {
         base.Update();
@@ -45,6 +51,23 @@ public class Player:Mono
     protected override void Start()
     {
         base.Start();
+    }
+
+    public void SetPosition(Vector3 pos)
+    {
+        if (pos!=null)
+        this.Position = pos;
+    }
+
+    public void SetState(PlayerStateData state)
+    {
+        if (state!=null)
+        playerState = state;
+    }
+    public override void OnCollisionStay(BaseCollider collider)
+    {
+        base.OnCollisionStay(collider);
+        Console.WriteLine("Player"+id+"正在发生碰撞");
     }
 
     public override void OnCollisionEnter(BaseCollider collider)

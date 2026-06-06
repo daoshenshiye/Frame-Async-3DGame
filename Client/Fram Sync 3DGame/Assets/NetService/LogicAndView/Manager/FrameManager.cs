@@ -176,8 +176,8 @@ public class FrameManager:MonoBehaviour
         }
         
         print("进入了");
-        int rttFrames = Mathf.CeilToInt((float)(CurrentRTT * 1000) / serverframeMs);
-        Debug.LogWarning($"当前RTT: {CurrentRTT:F3}秒 ({CurrentRTT*1000:F1}ms), 约{rttFrames}帧");
+        int rttFrames = Mathf.CeilToInt((float)CurrentRTT/ serverframeMs);
+        Debug.LogWarning($"当前RTT: {CurrentRTT:F3}毫秒 ({CurrentRTT:F1}ms), 约{rttFrames}帧");
         long targetPredict = CurrentServerLogicFrame + rttFrames +1;
         LocalPredictLogicFrame = targetPredict;
         LogicViewBridge.Instance.SyncAllState(msg);
@@ -216,11 +216,6 @@ public class FrameManager:MonoBehaviour
                 size=Vector3.zero;
                 print("无法获取玩家信息");
             }
-          
-           inputMessage.input.ColliderBoxSize = new PlayerPosData();
-           inputMessage.input.ColliderBoxSize.x = size.x;
-           inputMessage.input.ColliderBoxSize.y = size.y;
-           inputMessage.input.ColliderBoxSize.z = size.z;
            inputMessage.PredictFrame = LocalPredictLogicFrame;
            UDPPingMsg pingMsg = new UDPPingMsg();
            pingMsg.SendTime = Stopwatch.GetTimestamp();

@@ -398,7 +398,6 @@ namespace ClientSocket.UDP
                     //}
                     #endregion
                 }
-
             }
         }
         private void SendCallBack(IAsyncResult ar)
@@ -429,7 +428,7 @@ namespace ClientSocket.UDP
         {
             if (socket != null)
             {
-                socket.Shutdown(SocketShutdown.Both);   
+                socket.Shutdown(SocketShutdown.Both);
                 socket.Close();
                 isRunning = false;
             }

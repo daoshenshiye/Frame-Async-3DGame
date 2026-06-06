@@ -21,9 +21,13 @@ namespace GameMessage{
                 }
                
                 UnityEngine.Debug.Log("发送了UDP加入消息");
+               
+                LogicAndView lav = LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID);
+                lav.logic.LogicPos.x = message.BirthPos.x;
+                lav.logic.LogicPos.y = message.BirthPos.y;
+                lav.logic.LogicPos.z = message.BirthPos.z;
                 UdpPlayerAddMsg udpPlayerAdd = new UdpPlayerAddMsg();
                 udpPlayerAdd.playerId = PlayerManager.LocalPlayerID;
-                LogicAndView lav = LogicViewBridge.Instance.GetPlayerLogicAndView(PlayerManager.LocalPlayerID);
                 udpPlayerAdd.playerstate = new GamePlayer.PlayerStateData();
                 udpPlayerAdd.playerstate.playerPos = new GamePlayer.PlayerPosData();
                 udpPlayerAdd.playerstate.playerPos.x = lav.logic.LogicPos.x;

@@ -14,6 +14,7 @@ using ClientSocket.Physics;
 using ClientSocket.Physics.Colliders;
 using ClientSocket.ServerPlayer;
 using GameMessage;
+using Vector3 = ClientSocket.Tools.Vector3;
 
 public class FrameManager
 {
@@ -23,8 +24,6 @@ public class FrameManager
     private float accumulatedFrameTime=0;
     private bool shouldOpenLogic = false;
     public const int DelayBufferFrames = 2;
-    //public Dictionary<int,BaseMsg> PlayerFrameInputs= new Dictionary<int, BaseMsg>();
-    //public Dictionary<long, List<BaseMsg>> NetInputsDic = new Dictionary<long, List<BaseMsg>>();
     public ConcurrentDictionary<long, ConcurrentDictionary<int, ClientInput>> frameInputBuffer = new();
     public ConcurrentDictionary<int,long> SendTimeBuffer = new();
     private List<ServerInputAndStateData> inputs=new List<ServerInputAndStateData>();
@@ -112,23 +111,20 @@ public class FrameManager
     public void CollectPlayerInputs(long executeFrame)
     {
                 // 收集 executeFrame 的所有玩家输入
-               List<long> sortedFrameKeys = frameInputBuffer.Keys.ToList();
-                sortedFrameKeys.Sort();
-                if(sortedFrameKeys.Count>0)
-                if (sortedFrameKeys[^1]<executeFrame)
-                {
+               // List<long> sortedFrameKeys = frameInputBuffer.Keys.ToList();
+               //  sortedFrameKeys.Sort();
+               //  if(sortedFrameKeys.Count>0)
+               //  if (sortedFrameKeys[^1]<executeFrame)
+               //  {
                     // Console.WriteLine($"警告：当前执行帧{executeFrame}的输入还没有到齐," +
                     //                   $" 当前缓冲区最大帧是{sortedFrameKeys[^1]}");
-                }
-                // bool hasAnyBuffer = sortedFrameKeys.Count > 0;
-                // long maxBufferedFrame = hasAnyBuffer ? sortedFrameKeys[^1] : -1;
+                // }
                 var frameInputs = new Dictionary<int, ClientInput>();
                 if (frameInputBuffer.ContainsKey(executeFrame))
                 {
                     
                     foreach (var kvp in frameInputBuffer[executeFrame])
                     {
-                        // Console.WriteLine($"  玩家{kvp.Key}: H={kvp.Value.input.Horizontal}, V={kvp.Value.input.Vertical}");
                         frameInputs[kvp.Key] = kvp.Value;
                     }
                 }
@@ -138,18 +134,6 @@ public class FrameManager
                 {
                     if (!frameInputs.ContainsKey(client.playerID) && client.playerID != -1)
                     {
-                        // long fallbackSendTime = 0;
-                        //
-                        // // 安全地尝试从最新帧获取该玩家的 SendTime
-                        // if (hasAnyBuffer && frameInputBuffer.ContainsKey(maxBufferedFrame))
-                        // {
-                        //     var latestFrameInputs = frameInputBuffer[maxBufferedFrame];
-                        //     if (latestFrameInputs.ContainsKey(client.playerID))
-                        //     {
-                        //         fallbackSendTime = latestFrameInputs[client.playerID].input.SendTime;
-                        //     }
-                        // }
-                        // Console.WriteLine($"玩家{client.playerID}在帧{executeFrame}的输入缺失，补空输入，maxBufferedFrame={maxBufferedFrame}");
                         frameInputs[client.playerID] = new ClientInput
                         {
                             playerId = client.playerID,
@@ -159,8 +143,6 @@ public class FrameManager
                                 Horizontal = 0,
                                 Vertical = 0,
                                 Jump = false,
-                                ColliderBoxSize = new PlayerPosData { x = 0, y = 0, z = 0 },
-                                // SendTime = fallbackSendTime 
                             }
                         };
                     }
@@ -188,41 +170,33 @@ public class FrameManager
             }
             else
             {
-                Console.WriteLine("非法玩家ID,没有TCP注册");
                 playerStateData = new PlayerStateData();
                 playerStateData.hp = 100;
                 playerStateData.playerPos = new PlayerPosData();
                 playerStateAndInput.playerstate = playerStateData;
-                playerStateAndInput.inputdata.ColliderBoxSize = new PlayerPosData();
                 return playerStateAndInput;
             }
 
             playerStateData.hp += 1;
             
-            Position dirPos = new Position(
+            Vector3 dirPos = new Vector3(
                 msg.input.Horizontal,
                 msg.input.Jump ? 1 : 0,
                 msg.input.Vertical
             );
             
-            Position beginPos = new Position(playerStateData.playerPos);
+            Vector3 beginPos = new Vector3(playerStateData.playerPos);
             
             UpdateMove(ref beginPos, dirPos, FixedDeltaTime);
             
             playerStateData.playerPos = beginPos.ToPlayerPosData();
             playerStateAndInput.playerstate = playerStateData;
-            Position BoxColliderSize;
-            if (playerStateAndInput.inputdata.ColliderBoxSize == null)
+            Vector3 BoxColliderSize;
+            Player player = PlayerManager.Instance.GetPlayer(msg.playerId);
+            if (player!=null)
             {
-                Console.WriteLine("碰撞盒大小为空");
-            }
-            else
-            {
-                BoxColliderSize= new Position(playerStateAndInput.inputdata.ColliderBoxSize);
-                if ((PlayerManager.Instance.GetPlayer(msg.playerId).GetComponent<BoxCollider>() as BoxCollider)!=null)
-                {
-                    (PlayerManager.Instance.GetPlayer(msg.playerId).GetComponent<BoxCollider>() as BoxCollider).Size = BoxColliderSize;    
-                }
+                player.SetPosition(beginPos);
+                player.SetState(playerStateData);
             }
             return playerStateAndInput;
         }
@@ -240,12 +214,12 @@ public class FrameManager
     {
         return Interlocked.Read(ref CurrentLogicFrame);
     }
-    public void UpdateMove(ref Position logicPos, Position dir, float FixedDeltaTime)
+    public void UpdateMove(ref Vector3 logicPos, Vector3 dir, float FixedDeltaTime)
     {
 
         if (dir.x == 0 && dir.y == 0 && dir.z == 0)
             return;
-        Position dirNormalized = new Position(
+        Vector3 dirNormalized = new Vector3(
             dir.x, dir.y, dir.z
         );
 
@@ -262,15 +236,15 @@ public class FrameManager
         }
 
        
-        Position newPos = logicPos + dirNormalized * MoveSpeed * FixedDeltaTime;
+        Vector3 newPos = logicPos + dirNormalized * MoveSpeed * FixedDeltaTime;
         
         logicPos = FixFloat(newPos);
     }
-    public Position FixFloat(Position pos)
+    public Vector3 FixFloat(Vector3 pos)
     {
         int precision = 1000;
         
-        return new Position((float)Math.Round(pos.x * precision)/precision, (float)Math.Round(pos.y * precision) / precision, (float)Math.Round(pos.z * precision) / precision);
+        return new Vector3((float)Math.Round(pos.x * precision)/precision, (float)Math.Round(pos.y * precision) / precision, (float)Math.Round(pos.z * precision) / precision);
     }
 
 }

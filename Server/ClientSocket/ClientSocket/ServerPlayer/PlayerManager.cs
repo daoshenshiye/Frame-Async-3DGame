@@ -27,6 +27,7 @@ public class PlayerManager
     {
         if (player_Dic.ContainsKey(id))
         {
+            player_Dic[id]=null;
             player_Dic.Remove(id);  
         }
     }

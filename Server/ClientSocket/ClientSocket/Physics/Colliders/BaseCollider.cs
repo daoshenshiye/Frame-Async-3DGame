@@ -5,33 +5,34 @@ namespace ClientSocket.Physics.Colliders;
 
 public abstract class BaseCollider:BaseComponent,ICollider
 {
-    public Position center;
-    public Position size;
-    public bool Collding;
-    public Position Size
+    private Vector3 center;
+    private Vector3 size;
+    public Dictionary<string,BaseCollider> ColiddingColliders=new Dictionary<string, BaseCollider>();
+    public Vector3 Size
     {
         get { return size; }
         set { size = value; }
     }
-    public Position Pos
+
+    public Vector3 Center
     {
         get { return center; }
+        set { center = value; }
     }
-   public BaseCollider(Position pos,Position size)
+   public BaseCollider(Vector3 center,Vector3 size)
     {
-        this.center = pos;
+        this.center = center;
         this.size = size;
     }
     
    public BaseCollider()
     {
-        this.center = new Position();
-        this.size = new Position();
+        this.center = new Vector3();
+        this.size = new Vector3(1,1,1);
     }
     
     public abstract bool IsColliding(ICollider other);
     public override void Update()
     {
-        center =Owner.position;
     }
 }

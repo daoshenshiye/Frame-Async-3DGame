@@ -11,19 +11,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c09224f6-7251-41ed-8a83-2bac6e4f1336" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameSystem/Handler/UDPPingMsgHandler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Fram Sync 3DGame/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Fram Sync 3DGame/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Editor/Protocol/protocolInfo.xml" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Editor/Protocol/protocolInfo.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Manager/FrameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Manager/FrameManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/NetService/Net/Main.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/Net/Main.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/NetService/Net/TCPManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/Net/TCPManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/NetService/Net/UdpManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/Net/UdpManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/TCPConnectionBuildMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/TCPConnectionBuildMsgHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/MsgPool/MsgPool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/MsgPool/MsgPool.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/PlayerCharacterCreateMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/PlayerCharacterCreateMsgHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Msg/PlayerCharacterCreateMsg.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Msg/PlayerCharacterCreateMsg.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GamePlayer/Data/InputData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GamePlayer/Data/InputData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UDPPingMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UDPPingMsgHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Component/BaseComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Component/BaseComponent.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/FrameManager/FrameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/FrameManager/FrameManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/MonoBehaviour/Mono.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/MonoBehaviour/Mono.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Handler/InputMessageHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Handler/InputMessageHandler.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/MsgPool/MsgPool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/MsgPool/MsgPool.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Msg/PlayerCharacterCreateMsg.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Msg/PlayerCharacterCreateMsg.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GamePlayer/Data/InputData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GamePlayer/Data/InputData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/Colliders/BaseCollider.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/Colliders/BaseCollider.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/Colliders/BoxCollider.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/Colliders/BoxCollider.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/PhysicsWorld.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Physics/PhysicsWorld.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/ServerPlayer/Player.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/ServerPlayer/Player.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/ServerPlayer/PlayerManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/ServerPlayer/PlayerManager.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/ServerSocket.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/ServerSocket.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Tools/Position.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Tools/Vector3.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPClient.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPServer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPServer.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.dll" afterDir="false" />
@@ -160,15 +167,13 @@
       <option name="MIXED_MODE_DEBUG" value="0" />
       <method v="2" />
     </configuration>
-    <configuration name="附加到 Unity 编辑器" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" useMixedMode="false" ignored-value-for-modified-check="13456">
+    <configuration name="附加到 Unity 编辑器" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" useMixedMode="false">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="13456" />
+      <option name="pid" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
-        <list>
-          <MonoRuntime />
-        </list>
+        <list />
       </option>
       <option name="selectedOptions">
         <list />
@@ -198,7 +203,8 @@
       <workItem from="1778823821556" duration="28456000" />
       <workItem from="1779641616704" duration="4048000" />
       <workItem from="1779856845775" duration="19266000" />
-      <workItem from="1780645600521" duration="25327000" />
+      <workItem from="1780645600521" duration="27012000" />
+      <workItem from="1780736074397" duration="5778000" />
     </task>
     <servers />
   </component>

@@ -9,11 +9,9 @@ public class Mono
 {
     
     private Dictionary<Type,List<BaseComponent>> components=new Dictionary<Type, List<BaseComponent>>();
-    public Position position;
+    public Vector3 Position;
     protected virtual void Start()
     {
-        AddComponent<Position>();
-        position = GetComponent<Position>() as  Position;
         foreach (var component in components.Values)
         {
             foreach (var v in component)
@@ -35,6 +33,11 @@ public class Mono
     }
 
     public virtual  void OnCollisionEnter(BaseCollider collider)
+    {
+        
+    }
+
+    public virtual void OnCollisionStay(BaseCollider collider)
     {
         
     }
