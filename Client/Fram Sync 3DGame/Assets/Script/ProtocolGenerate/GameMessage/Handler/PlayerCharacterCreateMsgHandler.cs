@@ -1,8 +1,13 @@
+using System;
+using UnityEngine;
+
 namespace GameMessage{
 		public class PlayerCharacterCreateMsgHandler:BaseHandler{
 		public override void HandlerDo(){
 			GameMessage.PlayerCharacterCreateMsg message=msg as  GameMessage.PlayerCharacterCreateMsg;
-			if(message!=null)
+			try
+			{ 
+				if(message!=null)
 			{
                 if (PlayerManager.Instance.player_Dic.ContainsKey(message.PlayerId))
                 {
@@ -36,6 +41,12 @@ namespace GameMessage{
                 udpPlayerAdd.playerstate.hp = lav.logic.HP;
                 UdpManager.Instance.UDPSend(udpPlayerAdd, E_UDP_MSG_TYPE.SIMPLE);
             }
+			}
+			catch (Exception e)
+			{
+				Debug.LogError(e.Message);
+				Debug.LogError(e.StackTrace);
+			}
 		}
 		}
 }

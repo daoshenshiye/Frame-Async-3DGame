@@ -17,14 +17,13 @@ namespace ClientSocket.TCP
 {
     public class ServerSocket
     {
-        public string ip;
-        public int port;
-        public Socket socket;
-        public  ConcurrentDictionary<int,ClientSocket> clientSockets;
-        
-        public Dictionary<int, Dictionary<int, ClientSocket>> rooms;
+        private string ip;
+        private int port;
+        private Socket socket;
+        private  ConcurrentDictionary<int,ClientSocket> clientSockets;
+        private Dictionary<int, Dictionary<int, ClientSocket>> rooms;
         private List<ClientSocket> DelClientSockets;
-        public bool ShouldOpenThread;
+        private bool ShouldOpenThread;
         private Thread AcceptThread;
         public  ServerSocket(string ip,int port)
         {
@@ -39,16 +38,23 @@ namespace ClientSocket.TCP
         }
         public void Accept( object obj)
         {
-
-            socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
-            //socket.Bind(new IPEndPoint(IPAddress.Parse(ip),port));
-            socket.Bind(new IPEndPoint(IPAddress.Parse(ip), port));
-            socket.Listen(512);
+            try
+            {
+                socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
+                //socket.Bind(new IPEndPoint(IPAddress.Parse(ip),port));
+                socket.Bind(new IPEndPoint(IPAddress.Parse(ip), port));
+                socket.Listen(512);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return;
+            }
             while (ShouldOpenThread)
             {
                 try
                 {
-                   Socket client= socket.Accept();
+                     Socket client= socket.Accept();
                     Console.WriteLine("客户端接入，远端：" + client.RemoteEndPoint);
                     ClientSocket clientSocket = new ClientSocket(client);
                     clientSockets.GetOrAdd(clientSocket.ID, clientSocket);

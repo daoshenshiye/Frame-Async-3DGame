@@ -9,37 +9,40 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NetService.Net;
 using UnityEngine;
 using UnityEngine.UI;
-public class ChacheReceive
-{
-    public byte[] chacheBytes;
-    public int chacheNum;
-    public ChacheReceive()
-    {
-        chacheBytes = new byte[100];
-        chacheNum = 0;
-    }
-    public ChacheReceive(byte[] bytes, int num)
-    {
-        chacheBytes = bytes;
-        chacheNum = num;
-
-    }
-}
+// public class ChacheReceive
+// {
+//     public byte[] chacheBytes;
+//     public int chacheNum;
+//     public ChacheReceive()
+//     {
+//         chacheBytes = new byte[100];
+//         chacheNum = 0;
+//     }
+//     public ChacheReceive(byte[] bytes, int num)
+//     {
+//         chacheBytes = bytes;
+//         chacheNum = num;
+//
+//     }
+// }
 public class TCPManager: MonoBehaviour 
 {
     private static TCPManager instance;
 
     public static TCPManager Instance=>instance;
-    private List<ChacheReceive> chacheReceives = new List<ChacheReceive>();
+    // private List<ChacheReceive> chacheReceives = new List<ChacheReceive>();
+    // private byte[] chacheBytes=new byte[1024*5];
     //private static string TCP_IP = "119.84.246.217";
     //private static int TCP_port = 36252;
     private Socket socket;
-    private byte[] chacheBytes=new byte[1024*5];
+    
     private int chacheNum;
     Queue<BaseHandler> receiveQueue = new Queue<BaseHandler>();
     Queue<BaseMsg> sendQueue= new Queue<BaseMsg>();
+    private bool OpenThread = false;
     private bool isconnected;
     public bool isConnected
     {
@@ -48,10 +51,10 @@ public class TCPManager: MonoBehaviour
             isconnected=socket!=null&&socket.Connected;
             return isconnected;
         }
-            private    set    
-            {
-                isconnected = value;
-            }
+        private  set    
+        {
+            isconnected = value;
+        }
     }
 
     private bool buildTCPConnection;
@@ -62,10 +65,6 @@ public class TCPManager: MonoBehaviour
         set
         {
             buildTCPConnection = value;
-            if (SendThread!=null)
-            {
-                SendThread.Start();
-            }
         }
     }
     private float SEND_HEART_MSG_TIME = 5f;
@@ -77,8 +76,13 @@ public class TCPManager: MonoBehaviour
     private Task ConnectTask;
     private Thread SendThread;
     private Thread ReceiveThread;
+    private MsgReceiveHandler _msgReceiveHandler;
+    private CancellationTokenSource _handshakeCts;
+    private readonly object _sendQueueLock = new object();
     private void Awake()
     {
+        _msgReceiveHandler=new  MsgReceiveHandler(1024*10);
+        _msgReceiveHandler.OnMessageParsed = ProcessMsg;
         instance = this;
         DontDestroyOnLoad(gameObject);
         InvokeRepeating("SendHeartMsg", 0, SEND_HEART_MSG_TIME);
@@ -99,55 +103,63 @@ public class TCPManager: MonoBehaviour
 
             print(e.Message);
             print(e.StackTrace);
-
-            return;
         }
         
     }
   
-    public async Task  ConnectWith(string ip,int port)
+    public async Task ConnectWith(string ip,int port)
     {
-        if (buildTCPConnection)
-        {
-            return;
-        }
-        
-        IPEndPoint iPEndPoint=new IPEndPoint(IPAddress.Parse(ip), port);
+        // 取消上一轮残留的握手计时，杜绝多任务并发
+        _handshakeCts?.Cancel();
+        _handshakeCts = new CancellationTokenSource();
+        var token = _handshakeCts.Token;
+
         if (socket==null)
         {
             socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
+            socket.ReceiveTimeout = 500;
+            socket.SendTimeout = 500;
         }
+
         try
-        {   
-            if(!socket.Connected)
+        {       
             ConnectTask = socket.ConnectAsync(ip, port);
-            if (await Task.WhenAny(ConnectTask, Task.Delay(WaitClientConnection_MS)) != ConnectTask)
+            if (await Task.WhenAny(ConnectTask, Task.Delay(WaitClientConnection_MS, token)) != ConnectTask)
             {
                 if (!socket.Connected)
                 {
-                    Close();
                     throw new Exception("连接超时,进行尝试");
                 }
             }
+
             print("连接成功, local=" + socket.LocalEndPoint + " remote=" + socket.RemoteEndPoint);
             print("连接成功");
-            SendThread=new Thread(SendMesg);
-            ReceiveThread=new Thread(ReceiveMesg);
-            isConnected = true;
-            ReceiveThread.Start();
-            await Task.Delay(WaitServerConnection_MS);
-            if (!buildTCPConnection)
-            {
-                Close();
-                throw new Exception("连接成功,但未建立TCP连接,进行重连");
-            }
             
+            OpenThread = true;
+            if (SendThread == null || !SendThread.IsAlive)
+            {
+                SendThread = new Thread(SendMesg);
+                SendThread.IsBackground = true;
+                SendThread.Start();
+            }
+            if (ReceiveThread == null || !ReceiveThread.IsAlive)
+            {
+                ReceiveThread = new Thread(ReceiveMesg);
+                ReceiveThread.IsBackground = true;
+                ReceiveThread.Start();
+            }
+            _ = CheckBusinessHandshakeTimeout(ip, port, token);
         }
-        catch(Exception e)
+        catch (OperationCanceledException)
         {
-
-          Debug.Log(e.Message);
-            if (currentRetryAttempts<= MaxRetryAttempts)
+            // 任务被主动取消，正常忽略
+            Debug.LogWarning("上一轮握手计时已取消");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning(e.Message);
+            await SafeClose();
+            if (currentRetryAttempts <= MaxRetryAttempts)
             {
                 currentRetryAttempts++;
                 await Task.Delay(RetryDelay_MS);
@@ -157,25 +169,81 @@ public class TCPManager: MonoBehaviour
             {
                 Debug.LogError("重连次数用尽，停止重连");
             }
-
         }
-        
     }
+    /// <summary>等待业务确认包TCPconnectionBuild，超时自动断开重连</summary>
+    private async Task CheckBusinessHandshakeTimeout(string ip, int port, CancellationToken token)
+    {
+        int waitMs = WaitServerConnection_MS;
+        int step = 100;
+        int totalWait = 0;
+    
+        while (totalWait < waitMs)
+        {
+            await Task.Delay(step, token);
+            totalWait += step;
+
+            if (buildTCPConnection)
+            {
+                OpenThread = true;
+                if (ReceiveThread == null || !ReceiveThread.IsAlive)
+                {
+                    ReceiveThread = new Thread(ReceiveMesg);
+                    ReceiveThread.IsBackground = true;
+                    ReceiveThread.Start();
+                }
+                if (SendThread == null || !SendThread.IsAlive)
+                {
+                    SendThread = new Thread(SendMesg);
+                    SendThread.IsBackground = true;
+                    SendThread.Start();
+                }
+                return;
+            }
+            if (!isConnected)
+            {
+                await SafeClose();
+                _ = ConnectWith(ip, port);
+                return;
+            }
+        }
+
+        Debug.LogWarning($"业务握手超时{waitMs}ms，断开重连");
+        await Task.Delay(RetryDelay_MS);
+        if (buildTCPConnection)
+        {
+            return;
+        }
+        await SafeClose();
+        _ = ConnectWith(ip, port);
+    }
+    
+
 
     public void Send(BaseMsg message)
     {
-        sendQueue.Enqueue(message);
+        lock (_sendQueueLock)
+        {
+            sendQueue.Enqueue(message);
+        }
     }
     private void SendMesg(object obj)
     {
-      while(isconnected&&buildTCPConnection)
+        while (OpenThread)
         {
+            BaseMsg msg=null;
             try
             {
-                if (sendQueue.Count > 0)
+                lock (_sendQueueLock)
                 {
-                    byte[] bs = sendQueue.Dequeue().Writting();
-
+                    if (buildTCPConnection && sendQueue.Count > 0)
+                    {
+                        msg = sendQueue.Dequeue();
+                    }
+                }
+                if (msg != null)
+                {
+                    byte[] bs = msg.Writting();
                     if (socket != null)
                         socket.Send(bs);
                 }
@@ -186,180 +254,199 @@ public class TCPManager: MonoBehaviour
             }
             catch (SocketException e)
             {
-                Debug.LogError(e.InnerException);
-                Debug.LogError(e.SocketErrorCode);
+                Debug.LogError($"发送Socket错误：{e.SocketErrorCode}");
             }
             catch (Exception e)
             {
-                Debug.LogError(e.Message);
-                Debug.LogError(e.StackTrace);
+                Debug.LogError($"发送异常：{e.Message}");
             }
-           
+
         }
-
     }
-
-    private  void Close()
+    private async Task SafeClose()
     {
-       if(socket!=null)
+        OpenThread = false;
+        buildTCPConnection = false;
+        // 等待线程完全退出，延长等待时间
+        if (ReceiveThread != null && ReceiveThread.IsAlive)
+        {
+            ReceiveThread.Join(500);
+        }
+        if (SendThread != null && SendThread.IsAlive)
+        {
+            SendThread.Join(500);
+        }
+        ReceiveThread = null; 
+        SendThread = null;
+        if (socket != null)
         {
             try
             {
-                if (isConnected&&buildTCPConnection)
-                {
-                    QuitMessage quit = new QuitMessage();
-
-                    socket.Send(quit.Writting());
-                }
                 if (isConnected)
                 {
+                    QuitMessage quit = new QuitMessage();
+                    socket.Send(quit.Writting());
                     socket.Shutdown(SocketShutdown.Both);
                     socket.Close();
                 }
-                
-                socket = null;
-                
             }
-            catch (Exception e) {
-                print(e.Message);
-                print(e.StackTrace);
-            }
-          
+            catch { }
+            socket = null;
         }
+        _msgReceiveHandler.ResetReadIndex();
     }
+
     private void ReceiveMesg()
     {
         byte[] bytes = new byte[1024 * 5];
-        while (isConnected)
+        while (OpenThread)
         {
             try
             { 
-                    
+                print("进入了接收TCP");
+                
                 int Length = socket.Receive(bytes);
                 if (Length<=0)
                 {
-                    break;
+                    Thread.Sleep(1);
+                    continue;
                 }
                 
                 HandleReceive(bytes, Length);
-                
+       
                 Thread.Sleep(1);
+             
             }
             catch (SocketException e)
             {
-                Debug.LogError(e.InnerException);
-                Debug.LogError(e.SocketErrorCode);
-                Debug.LogError(e.StackTrace);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e.Message);
-                Debug.LogError(e.StackTrace);
+                switch (e.SocketErrorCode)
+                {
+                    case SocketError.TimedOut:
+                        continue;
+                    case SocketError.Interrupted:
+                    case SocketError.ConnectionReset:
+                    case SocketError.ConnectionAborted:
+                    case SocketError.NotConnected:
+                        buildTCPConnection = false;
+                        OpenThread = false;
+                        Debug.LogError($"连接断开，错误码：{e.SocketErrorCode}");
+                        break;
+                    default:
+                        Debug.LogError($"未知Socket错误：{e.SocketErrorCode} {e.Message}");
+                        break;
+                }
+                print("Socket异常断开：" + e.Message);
+                break;
             }
         }
         
     }
     public void HandleReceive(byte[] bytes,int receiveLength)
     {
-        try
-        {
-            print("进入了TCP消息处理");
-            int nowindex = 0;
-            int ID = 0;
-            int msgLength = 0;
-            if (chacheReceives.Count > 0)
-            {
-                for (int i = 0; i < chacheReceives.Count; i++)
-                {
-
-                    var chaches = chacheReceives[i];
-                    if (chaches.chacheNum < 8)
-                        continue;
-                    int nowindex2 = 0;
-                    int msgLength2 = 0;
-                    int ID2 = 0;
-                    ID2 = BitConverter.ToInt32(chaches.chacheBytes, nowindex2);
-                    nowindex2 += 4;
-                    msgLength2 = BitConverter.ToInt32(chaches.chacheBytes, nowindex2);
-                    nowindex2 += 4;
-                    if (msgLength2 + 8 == chaches.chacheNum + receiveLength)
-                    {
-                        chaches.chacheBytes.CopyTo(chacheBytes, 0);
-                        bytes.CopyTo(chacheBytes, chaches.chacheNum);
-                        chacheNum += receiveLength + chaches.chacheNum;
-                        chacheReceives.RemoveAt(i);
-                        break;
-                    }
-                }
-
-            }
-            if (chacheNum == 0)
-            {
-                bytes.CopyTo(chacheBytes, chacheNum);
-                chacheNum += receiveLength;
-            }
-            while (true)
-            {
-                msgLength = -1;
-                if (chacheNum - nowindex >= 8)
-                {
-                    ID = BitConverter.ToInt32(chacheBytes, nowindex);
-                    nowindex += 4;
-                    msgLength = BitConverter.ToInt32(chacheBytes, nowindex);
-                    nowindex += 4;
-                }
-                if (chacheNum - nowindex >= msgLength && msgLength != -1)
-                {
-                    BaseMsg baseMsg = MsgPool.Instance.GetMsg(ID);
-                    if (baseMsg != null)
-                    {
-                        print("收到了TCP消息");
-                        baseMsg.Reading(chacheBytes, nowindex);
-                        BaseHandler handler = MsgPool.Instance.GetHandler(ID);
-                        handler.msg = baseMsg;
-                        receiveQueue.Enqueue(handler);
-                    }
-                    nowindex += msgLength;
-                    if (nowindex == chacheNum)
-                    {
-                        chacheNum = 0;
-                        break;
-                    }
-                }
-                else
-                {
-
-                    if (msgLength != -1)
-                    {
-                        nowindex -= 8;
-
-                    }
-                    int remaining = chacheNum - nowindex;
-                    byte[] chacheBytes2 = new byte[Math.Max(0, remaining)];
-                    int chacheNum2 = 0;
-                    if (remaining > 0)
-                    {
-                        if (remaining > 100)
-                        {
-                            UnityEngine.Debug.Log("越界了");
-
-                        }
-
-                        Array.Copy(chacheBytes, nowindex, chacheBytes2, 0, remaining);
-                        chacheNum2 = remaining;
-                    }
-                    chacheNum = 0;
-                    chacheBytes = new byte[1024];
-                    chacheReceives.Add(new ChacheReceive(chacheBytes2, chacheNum2));
-                    break;
-                }
-            }
-        }
-        catch (Exception e) { print(e.Message); print(e.StackTrace); 
         
-        }
         
+        _msgReceiveHandler.HandleReceiveMsg(bytes, receiveLength);
+        
+        #region 老版本的消息处理
+        // try
+        // {
+               //     print("进入了TCP消息处理");
+        //     int nowindex = 0;
+        //     int ID = 0;
+        //     int msgLength = 0;
+        //     if (chacheReceives.Count > 0)
+        //     {
+        //         for (int i = 0; i < chacheReceives.Count; i++)
+        //         {
+        //
+        //             var chaches = chacheReceives[i];
+        //             if (chaches.chacheNum < 8)
+        //                 continue;
+        //             int nowindex2 = 0;
+        //             int msgLength2 = 0;
+        //             int ID2 = 0;
+        //             ID2 = BitConverter.ToInt32(chaches.chacheBytes, nowindex2);
+        //             nowindex2 += 4;
+        //             msgLength2 = BitConverter.ToInt32(chaches.chacheBytes, nowindex2);
+        //             nowindex2 += 4;
+        //             if (msgLength2 + 8 == chaches.chacheNum + receiveLength)
+        //             {
+        //                 chaches.chacheBytes.CopyTo(chacheBytes, 0);
+        //                 bytes.CopyTo(chacheBytes, chaches.chacheNum);
+        //                 chacheNum += receiveLength + chaches.chacheNum;
+        //                 chacheReceives.RemoveAt(i);
+        //                 break;
+        //             }
+        //         }
+        //
+        //     }
+        //     if (chacheNum == 0)
+        //     {
+        //         bytes.CopyTo(chacheBytes, chacheNum);
+        //         chacheNum += receiveLength;
+        //     }
+        //     while (true)
+        //     {
+        //         msgLength = -1;
+        //         if (chacheNum - nowindex >= 8)
+        //         {
+        //             ID = BitConverter.ToInt32(chacheBytes, nowindex);
+        //             nowindex += 4;
+        //             msgLength = BitConverter.ToInt32(chacheBytes, nowindex);
+        //             nowindex += 4;
+        //         }
+        //         if (chacheNum - nowindex >= msgLength && msgLength != -1)
+        //         {
+        //             BaseMsg baseMsg = MsgPool.Instance.GetMsg(ID);
+        //             if (baseMsg != null)
+        //             {
+        //                 print("收到了TCP消息");
+        //                 baseMsg.Reading(chacheBytes, nowindex);
+        //                 BaseHandler handler = MsgPool.Instance.GetHandler(ID);
+        //                 handler.msg = baseMsg;
+        //                 receiveQueue.Enqueue(handler);
+        //             }
+        //             nowindex += msgLength;
+        //             if (nowindex == chacheNum)
+        //             {
+        //                 chacheNum = 0;
+        //                 break;
+        //             }
+        //         }
+        //         else
+        //         {
+        //             if (msgLength != -1)
+        //             {
+        //                 nowindex -= 8;
+        //
+        //             }
+        //             int remaining = chacheNum - nowindex;
+        //             byte[] chacheBytes2 = new byte[Math.Max(0, remaining)];
+        //             int chacheNum2 = 0;
+        //             if (remaining > 0)
+        //             {
+        //                 if (remaining > 100)
+        //                 {
+        //                     UnityEngine.Debug.Log("越界了");
+        //
+        //                 }
+        //
+        //                 Array.Copy(chacheBytes, nowindex, chacheBytes2, 0, remaining);
+        //                 chacheNum2 = remaining;
+        //             }
+        //             chacheNum = 0;
+        //             chacheBytes = new byte[1024];
+        //             chacheReceives.Add(new ChacheReceive(chacheBytes2, chacheNum2));
+        //             break;
+        //         }
+        //     }
+        // }
+        // catch (Exception e) { print(e.Message); print(e.StackTrace); 
+        //
+        // }
 
+            #endregion
+     
         #region 老版本的收消息switch-case
         //int nowindex = 0;
         //int ID = 0;
@@ -422,17 +509,30 @@ public class TCPManager: MonoBehaviour
         #endregion
     }
 
-    void Update()
+    public void ProcessMsg(BaseHandler handler)
     {
-        
-        if(receiveQueue.Count>0)
+        if (handler.msg is TCPConnectionBuildMsg)
+        {
+            BuildTCPConnection = true;
+            currentRetryAttempts = 0;
+            _handshakeCts?.Cancel();
+        }
+        receiveQueue.Enqueue(handler);
+    }
+    private void Update()
+    {
+        while(receiveQueue.Count > 0)
         {
             receiveQueue.Dequeue().HandlerDo();
         }
-
     }
+
     private void OnDestroy()
     {
-        Close();
+        _handshakeCts?.Cancel();
+        _handshakeCts?.Dispose();
+        _ = SafeClose();
+        OpenThread = false;
+        _msgReceiveHandler = null;
     }
 }

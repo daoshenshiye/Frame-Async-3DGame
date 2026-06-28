@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,16 +22,25 @@ public class PlayerInfo
     }
     public GameObject CreatePlayerInstance()
     {
-        if (player_instance != null)
-            return player_instance;
-        if (PlayerCharacterRes != null)
+        try
         {
-            player_instance = Object.Instantiate(Resources.Load<GameObject>(PlayerCharacterRes));
-            player_instance.name = NickName;
-            return player_instance;
+            if (player_instance != null)
+                return player_instance;
+            if (PlayerCharacterRes != null)
+            {
+                player_instance = GameObject.Instantiate(Resources.Load<GameObject>(PlayerCharacterRes));
+                player_instance.name = NickName;
+                return player_instance;
+            }
+            else
+            {
+                return null;
+            }
         }
-        else
+        catch (Exception e)
         {
+            Debug.LogError(e.Message);
+            Debug.LogError(e.StackTrace);
             return null;
         }
     }

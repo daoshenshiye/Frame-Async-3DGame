@@ -25,21 +25,20 @@ public class FrameManager
     private bool shouldOpenLogic = false;
     public const int DelayBufferFrames = 3;
     public ConcurrentDictionary<long, ConcurrentDictionary<int, ClientInput>> frameInputBuffer = new();
-    public ConcurrentDictionary<int,long> SendTimeBuffer = new();
     private List<ServerInputAndStateData> inputs=new List<ServerInputAndStateData>();
     private DateTime lastTime=DateTime.Now;
     private float MoveSpeed = 2f;
     private int timespan = 1000 / 15;
+    private Thread frameThread;
     public FrameManager(int fixedFrameRate)
     {
         FixedFrameRate = fixedFrameRate;
         FixedDeltaTime = 1f / FixedFrameRate;
         shouldOpenLogic=true;
-
-        ThreadPool.QueueUserWorkItem(Update);
-        
+        frameThread = new Thread(Update);
+        frameThread.Start();
     }
-    private void Update(object obj)
+    private void Update()
     {
         while (shouldOpenLogic)
         {
@@ -76,7 +75,7 @@ public class FrameManager
                         removeList.Add(frame.Key);
                     }
                 }
-
+                
                 foreach (var v in removeList)
                 {
                     frameInputBuffer.TryRemove(v, out _);

@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
+using NetService.Net;
 
 namespace ClientSocket.TCP
 {
@@ -20,29 +21,28 @@ namespace ClientSocket.TCP
         {
             chacheBytes=bytes;
             chacheNum=num;
-
         }
     }
 
     public class ClientSocket
     {
-        private byte[] chacheBytes = new byte[1024*5];
-
+        public int ID;
         
+        private byte[] chacheBytes = new byte[1024*5];
         private List<ChacheReceive> chacheReceives= new List<ChacheReceive>();
         private int chacheNum;
-        public static int Begin_ID=0;
-        public int ID;
+        private static int Begin_ID=0;
         private Socket socket;
-        public bool isConnected=>socket.Connected;
-        private long preTime=-1;
+        private bool isConnected=>socket.Connected;
+        private  long preTime=-1;
         private static long TimeOutTime = 20;
         private bool shouldRun=false;
         private int Length;
-
+        private MsgReceiveHandler _msgReceiveHandler;
        public ClientSocket(Socket socket)
-        {
-
+       {
+           _msgReceiveHandler = new MsgReceiveHandler(1024 * 10);
+           _msgReceiveHandler.OnMessageParsed=ProcessParsedMessage;
             this.socket = socket;
             ID = Begin_ID;
             ++Begin_ID;
@@ -118,107 +118,127 @@ namespace ClientSocket.TCP
             }
            
         }
+        private void ProcessParsedMessage(BaseHandler handler)
+        {
+            BaseMsg msg = handler.msg;
+            preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
+
+            if (msg is QuitMessage)
+            {
+                MainClass.serverSocket.CloseClientSocket(this);
+                return;
+            }
+            if (msg is HeartMsg)
+            {
+                preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
+                return;
+            }
+            handler.HandlerDo();
+        }
         public void DoReceive(byte[] bytes, int receiveLength)
         {
-            
-            int nowindex = 0;
-            int ID = 0;
-            int msgLength = 0;
-            if (chacheReceives.Count > 0)
-            {
-                foreach (var chaches in chacheReceives)
-                {
-                    int nowindex2 = 0;
-                    int msgLength2 = 0;
-                    int ID2 = 0;
-                    ID2 = BitConverter.ToInt32(chaches.chacheBytes, nowindex2);
-                    nowindex2 += 4;
-                    msgLength2 = BitConverter.ToInt32(chaches.chacheBytes, nowindex2);
-                    nowindex2 += 4;
-                    if (msgLength2 + 8 == chaches.chacheNum + receiveLength)
-                    {
-                        chaches.chacheBytes.CopyTo(chacheBytes, 0);
-                        bytes.CopyTo(chacheBytes, chaches.chacheNum);
-                        chacheNum += receiveLength + chaches.chacheNum;
-                        chacheReceives.Remove(chaches);
-                        break;
-                    }
-                }
+            _msgReceiveHandler.HandleReceiveMsg(bytes,receiveLength);
+            #region 老版本的消息处理
 
-            }
-            if(chacheNum==0)
-            {
-                bytes.CopyTo(chacheBytes, chacheNum);
-                chacheNum += receiveLength;
-            }
-            while (true)
-            {
-                msgLength = -1;
-                if (chacheNum - nowindex >= 8)
-                {
-                    ID = BitConverter.ToInt32(chacheBytes, nowindex);
-                    nowindex += 4;
-                    msgLength = BitConverter.ToInt32(chacheBytes, nowindex);
-                    nowindex += 4;
-                }
+                        // int nowindex = 0;
+            // int ID = 0;
+            // int msgLength = 0;
+            // if (chacheReceives.Count > 0)
+            // {
+            //     foreach (var chaches in chacheReceives)
+            //     {
+            //         int nowindex2 = 0;
+            //         int msgLength2 = 0;
+            //         int ID2 = 0;
+            //         ID2 = BitConverter.ToInt32(chaches.chacheBytes, nowindex2);
+            //         nowindex2 += 4;
+            //         msgLength2 = BitConverter.ToInt32(chaches.chacheBytes, nowindex2);
+            //         nowindex2 += 4;
+            //         if (msgLength2 + 8 == chaches.chacheNum + receiveLength)
+            //         {
+            //             chaches.chacheBytes.CopyTo(chacheBytes, 0);
+            //             bytes.CopyTo(chacheBytes, chaches.chacheNum);
+            //             chacheNum += receiveLength + chaches.chacheNum;
+            //             chacheReceives.Remove(chaches);
+            //             break;
+            //         }
+            //     }
+            //
+            // }
+            // if(chacheNum==0)
+            // {
+            //     bytes.CopyTo(chacheBytes, chacheNum);
+            //     chacheNum += receiveLength;
+            // }
+            // while (true)
+            // {
+            //     msgLength = -1;
+            //     if (chacheNum - nowindex >= 8)
+            //     {
+            //         ID = BitConverter.ToInt32(chacheBytes, nowindex);
+            //         nowindex += 4;
+            //         msgLength = BitConverter.ToInt32(chacheBytes, nowindex);
+            //         nowindex += 4;
+            //     }
+            //
+            //     if (chacheNum - nowindex >= msgLength && msgLength != -1)
+            //     {
+            //         BaseMsg baseMsg=MsgPool.Instance.GetMsg(ID);
+            //         preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
+            //         if (baseMsg!=null)
+            //         {
+            //
+            //             baseMsg.Reading(chacheBytes, nowindex);
+            //             
+            //             BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
+            //             baseHandler.msg = baseMsg;
+            //             if (baseMsg is QuitMessage)
+            //             {
+            //                 MainClass.serverSocket.CloseClientSocket(this);
+            //             }
+            //             else if (baseMsg is HeartMsg)
+            //             {
+            //                 
+            //                 preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
+            //             }
+            //             else
+            //             {
+            //                 if (baseHandler != null)
+            //                 {
+            //                     baseHandler.HandlerDo();
+            //                 }
+            //             }
+            //            
+            //         }
+            //         
+            //         nowindex += msgLength;
+            //
+            //         if (nowindex >= chacheNum)
+            //         {
+            //             chacheNum = 0;
+            //             break;
+            //         }
+            //     }
+            //     else
+            //     {
+            //
+            //         if (msgLength != -1)
+            //         {
+            //             nowindex -= 8;
+            //
+            //         }
+            //         byte[] chacheBytes2 = new byte[100];
+            //         int chacheNum2 = 0;
+            //         Array.Copy(chacheBytes, nowindex, chacheBytes2, chacheNum2, chacheNum - nowindex);
+            //         chacheNum2= chacheNum - nowindex;
+            //         chacheNum = 0;
+            //         chacheReceives.Add(new ChacheReceive(chacheBytes2,chacheNum2));
+            //         break;
+            //     }
+            //
+            // }            
 
-                if (chacheNum - nowindex >= msgLength && msgLength != -1)
-                {
-                    BaseMsg baseMsg=MsgPool.Instance.GetMsg(ID);
-                    preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
-                    if (baseMsg!=null)
-                    {
-
-                        baseMsg.Reading(chacheBytes, nowindex);
-                        
-                        BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
-                        baseHandler.msg = baseMsg;
-                        if (baseMsg is QuitMessage)
-                        {
-                            MainClass.serverSocket.CloseClientSocket(this);
-                        }
-                        else if (baseMsg is HeartMsg)
-                        {
-                            
-                            preTime = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
-                        }
-                        else
-                        {
-                            if (baseHandler != null)
-                            {
-                                baseHandler.HandlerDo();
-                            }
-                        }
-                       
-                    }
-                    
-                    nowindex += msgLength;
-
-                    if (nowindex >= chacheNum)
-                    {
-                        chacheNum = 0;
-                        break;
-                    }
-                }
-                else
-                {
-
-                    if (msgLength != -1)
-                    {
-                        nowindex -= 8;
-
-                    }
-                    byte[] chacheBytes2 = new byte[100];
-                    int chacheNum2 = 0;
-                    Array.Copy(chacheBytes, nowindex, chacheBytes2, chacheNum2, chacheNum - nowindex);
-                    chacheNum2= chacheNum - nowindex;
-                    chacheNum = 0;
-                    chacheReceives.Add(new ChacheReceive(chacheBytes2,chacheNum2));
-                    break;
-                }
-
-            }
-
+            #endregion
         }
 
         public void Close()
@@ -227,9 +247,10 @@ namespace ClientSocket.TCP
             {
                 if (socket != null)
                 {
+                    _msgReceiveHandler.ResetReadIndex();
                     shouldRun = false;
                     socket.Shutdown(SocketShutdown.Both);
-
+                    
                     socket.Close();
                 }
             }

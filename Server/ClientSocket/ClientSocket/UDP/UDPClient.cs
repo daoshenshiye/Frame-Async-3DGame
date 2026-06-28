@@ -19,22 +19,21 @@ namespace ClientSocket.UDP
 
         private static long TimeOutTime=40;
         public long preTime=-1;
-        
         public ConcurrentDictionary<long, BaseHandler> inputsDic;
         public string ipaddr;
         public int playerID=-1;
         private bool shouldOpen=false;
-        
+        private Thread CheckTimeOutThread;
         public  UDPClient(string id)
         {
            inputsDic= new ConcurrentDictionary<long, BaseHandler>();
             ipaddr= id;
             shouldOpen= true;
-            ThreadPool.QueueUserWorkItem(CheckTimeOut);
-            
+            CheckTimeOutThread=new Thread(CheckTimeOut);
+            CheckTimeOutThread.Start();
         }
         
-        public void CheckTimeOut(object obj)
+        public void CheckTimeOut()
         {
             while (shouldOpen)
             {
@@ -212,12 +211,8 @@ namespace ClientSocket.UDP
                                 {
                                     MainClass.udpserver.ClientPID_TO_Addr_Dic[inputMsg.PlayerId] = ipaddr;
                                 }
-
-
-
                             }
                         }
-
                         nowIndex += msgLength;
                     }
 
