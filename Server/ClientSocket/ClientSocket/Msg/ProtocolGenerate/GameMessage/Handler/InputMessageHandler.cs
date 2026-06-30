@@ -18,11 +18,12 @@ namespace GameMessage{
        
 		public override void HandlerDo(){
 			GameMessage.InputMessage message=msg as  GameMessage.InputMessage;
+            Console.WriteLine("收到了输入消息");
             if (message != null) {
                 ClientInput ClientInput= LoadInputData(message);
                 // use thread-safe GetOrAdd to obtain per-player queue and enqueue the input
                 
-                var frameDict = MainClass.frameManager.frameInputBuffer.GetOrAdd(
+                var frameDict = MainClass.frameManager.PlayerInputHandler.GetBuffer().GetOrAdd(
                     ClientInput.predictFrame,
                    new ConcurrentDictionary<int, ClientInput>()
                 );

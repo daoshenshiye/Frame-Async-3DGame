@@ -15,7 +15,8 @@ namespace ClientSocket.Tools
         public float x;
         public float y;
         public float z;
-
+        public static Vector3 Zero => new Vector3(0.0f, 0.0f, 0.0f);
+        
         #region 新增：x/y/z 构造函数（float 类型核心重载）
         // 1. 核心构造函数：直接传入 float 类型 x/y/z
         public Vector3(float x, float y, float z)

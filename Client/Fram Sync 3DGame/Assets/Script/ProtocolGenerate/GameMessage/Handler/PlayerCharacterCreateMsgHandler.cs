@@ -31,6 +31,7 @@ namespace GameMessage{
                 lav.logic.LogicPos.x = message.BirthPos.x;
                 lav.logic.LogicPos.y = message.BirthPos.y;
                 lav.logic.LogicPos.z = message.BirthPos.z;
+                
                 UdpPlayerAddMsg udpPlayerAdd = new UdpPlayerAddMsg();
                 udpPlayerAdd.playerId = PlayerManager.LocalPlayerID;
                 udpPlayerAdd.playerstate = new GamePlayer.PlayerStateData();
@@ -40,6 +41,7 @@ namespace GameMessage{
                 udpPlayerAdd.playerstate.playerPos.z = lav.logic.LogicPos.z;
                 udpPlayerAdd.playerstate.hp = lav.logic.HP;
                 UdpManager.Instance.UDPSend(udpPlayerAdd, E_UDP_MSG_TYPE.SIMPLE);
+                UdpManager.Instance.StartUdpHeartMsgLoop();
             }
 			}
 			catch (Exception e)

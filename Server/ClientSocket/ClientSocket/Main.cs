@@ -10,7 +10,7 @@ namespace ClientSocket
     {
         public static ServerSocket serverSocket;
         public static UDPServer udpserver;
-        public static FrameManager frameManager;
+        public static global::FrameManager frameManager;
         public static void  Main(string[] args)
         {
              serverSocket = new ServerSocket("0.0.0.0", 9000);

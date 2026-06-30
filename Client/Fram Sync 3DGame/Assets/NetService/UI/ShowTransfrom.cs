@@ -37,7 +37,7 @@ public class ShowTransfrom : MonoBehaviour
             //text.text = camera.Target.position.ToString()+camera.Target.position.z;
             text.text = PlayerManager.LocalPlayerID.ToString();
         localInputTimes.text=FrameManager.Instance.localExecuteTimes.ToString();
-        ReceiveTimes.text = "发送数据量"+UdpManager.Instance.Counter.ToString();
+        // ReceiveTimes.text = "发送数据量"+UdpManager.Instance.Counter.ToString();
         AddInputTimes.text = "加入输入字典的次数" + FrameManager.Instance.Counter;
         CurrentRttText.text = FrameManager.Instance.CurrentRTT.ToString();
     }

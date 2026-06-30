@@ -16,6 +16,8 @@ public class Main : MonoBehaviour
         }
         print("开启逻辑执行");
 
+        
+        print("网络服务开启");
         if (TCPManager.Instance == null)
         {
             GameObject gameObject = new GameObject("NETTCP");
@@ -23,12 +25,5 @@ public class Main : MonoBehaviour
         }
         
         TCPManager.Instance.ConnectWith("119.84.246.217", 36252);
-        print("网络服务开启");
-        if (UdpManager.Instance == null)
-        {
-            GameObject gameObject = new GameObject("NETUDP");
-            gameObject.AddComponent<UdpManager>();
-            UdpManager.Instance.InitUdp();
-        }
     }
 }

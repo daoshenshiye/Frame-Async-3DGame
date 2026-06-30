@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using ClientSocket.ServerPlayer;
 using ClientSocket.Tools;
+using GameMsg;
 
 namespace ClientSocket.UDP
 {
@@ -31,21 +33,122 @@ namespace ClientSocket.UDP
         }
     }
 
+    public class UdpClientDic
+    {
+        private Dictionary<string, UDPClient> UDP_Client_Dic;
+        private Dictionary<int, string> ClientPID_TO_Addr_Dic;
+        
+        public UdpClientDic()
+        {
+            UDP_Client_Dic = new();
+            ClientPID_TO_Addr_Dic = new();
+        }
+
+        public bool AddClient(string IpPort,int playerId)
+        {
+            bool isNewClient = false;
+            
+            if (!UDP_Client_Dic.ContainsKey(IpPort))
+            {
+                lock (ClientPID_TO_Addr_Dic)
+                foreach (var v in ClientPID_TO_Addr_Dic)
+                {
+                    if (v.Key==playerId)
+                    {
+                        ClientPID_TO_Addr_Dic[v.Key] = IpPort;
+                        UDP_Client_Dic[IpPort] = new UDPClient(IpPort);
+                        return false;
+                    }
+                }
+                
+                
+                UDP_Client_Dic[IpPort] = new UDPClient(IpPort);
+                ClientPID_TO_Addr_Dic[playerId] = IpPort;
+                return true;
+                
+            }
+            return false;
+        }
+
+        public bool RemoveClient(string IpPort)
+        {
+                if (UDP_Client_Dic.ContainsKey(IpPort))
+                {
+                    if (UDP_Client_Dic[IpPort].playerID!=-1)
+                    {
+                        lock (ClientPID_TO_Addr_Dic)
+                        {
+                            if(ClientPID_TO_Addr_Dic.ContainsKey(UDP_Client_Dic[IpPort].playerID))
+                            ClientPID_TO_Addr_Dic.Remove(UDP_Client_Dic[IpPort].playerID);
+                        }
+                    }
+                    lock (UDP_Client_Dic)
+                    {
+                        UDP_Client_Dic.Remove(IpPort);
+                    }
+                    return true;
+                }
+
+                return false;
+        }
+
+        public bool HasClient(string key)
+        {
+            if (UDP_Client_Dic.ContainsKey(key))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool HasPlayer(int playerId)
+        {
+            if (ClientPID_TO_Addr_Dic.ContainsKey(playerId))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public string GetPlayerAddr(int playerId)
+        {
+            if (ClientPID_TO_Addr_Dic.ContainsKey(playerId))
+            {
+                    return ClientPID_TO_Addr_Dic[playerId];
+            }
+            return null;
+        }
+        public UDPClient GetClient(string key)
+        {
+            if (UDP_Client_Dic.ContainsKey(key))
+            {
+                return  UDP_Client_Dic[key];
+            }
+            return null;
+        }
+        public Dictionary<string, UDPClient> GetClients()
+        {
+            return UDP_Client_Dic;
+        }
+
+        public void SetPalyerAddr(int playerId, string playerAddr)
+        {
+            if (ClientPID_TO_Addr_Dic.ContainsKey(playerId))
+            {
+                ClientPID_TO_Addr_Dic[playerId] = playerAddr;
+            }
+        }
+    }
     public class UDPServer
     {
-        public Dictionary<string, UDPClient> UDP_Client_Dic = new Dictionary<string, UDPClient>();
-        public Dictionary<int,string> ClientPID_TO_Addr_Dic= new Dictionary<int,string>();
-        public  Dictionary<long, Dictionary<string,AckPackage>> AckDic= new Dictionary<long, Dictionary<string, AckPackage>>();
+        public UdpClientDic ClientDic = new();
         private  Socket socket;
         private bool isRunning = false;
         public  long nowsequence = 0;
-        // public ConcurrentDictionary<int,ConcurrentQueue<BaseHandler>> playerInputsQ_Dic=new ConcurrentDictionary<int, ConcurrentQueue<BaseHandler>>();
         public ConcurrentQueue<BaseHandler> simpleMsgQueue=new ConcurrentQueue<BaseHandler>();
-        public Dictionary<long,List<string>> needDeleteDic=new Dictionary<long, List<string>>();
-        private List<AckSendPackage> needSendList=new List<AckSendPackage>();
         private byte[] buffer = new byte[8192];
-
-
         public UDPServer(string ip, int port)
         {
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -54,22 +157,22 @@ namespace ClientSocket.UDP
 
             Receive();
             ThreadPool.QueueUserWorkItem(DoProcess);
-            //ThreadPool.QueueUserWorkItem(CheckTimeOutSendBack);
-
         }
         public void Receive()
         {
                 try
                 {
-                
                 EndPoint ipEndPoint = new IPEndPoint(IPAddress.Any, 0);
-                socket.BeginReceiveFrom(buffer,
-                            0,
-                            buffer.Length,
-                            SocketFlags.None, 
-                            ref ipEndPoint,
-                            ReceiveCallBack,
-                            ipEndPoint);
+                lock (socket)
+                {
+                    socket.BeginReceiveFrom(buffer,
+                        0,
+                        buffer.Length,
+                        SocketFlags.None, 
+                        ref ipEndPoint,
+                        ReceiveCallBack,
+                        ipEndPoint);
+                }
                         //try { Console.WriteLine($"UDPServer.Receive: packet from {(ipEndPoint as IPEndPoint).Address}:{(ipEndPoint as IPEndPoint).Port} length={Length} at {DateTime.Now:O}"); } catch { }
                    
                 }
@@ -82,31 +185,38 @@ namespace ClientSocket.UDP
         }
         private void ReceiveCallBack(IAsyncResult ar)
         {
-            try {
-                
+            try
+            {
+
                 EndPoint ipEnd = (EndPoint)ar.AsyncState;
-                int length = socket.EndReceiveFrom(ar, ref ipEnd);
-               
+                int length;
+                lock (socket)
+                {
+                    length = socket.EndReceiveFrom(ar, ref ipEnd);
+                }
                 
                 if (length > 0)
                 {
                     string key = (ipEnd as IPEndPoint).Address.ToString() + "," + (ipEnd as IPEndPoint).Port.ToString();
                     
-                    if (UDP_Client_Dic.ContainsKey(key))
+                    if (ClientDic.HasClient(key))
                     {
-                        UDP_Client_Dic[key].ReceiveMsg(buffer, length);
-
+                        ClientDic.GetClient(key)?.ReceiveMsg(buffer, length);
                     }
                     else
                     {
+                        BuildClient((buffer,length,key));
                         Console.WriteLine("UDP客户端地址" + key);
-                        lock(UDP_Client_Dic)
-                        UDP_Client_Dic.Add(key, new UDPClient(key));
-                        
-                        UDP_Client_Dic[key].ReceiveMsg(buffer, length);
                         //try { Console.WriteLine($"UDPServer.Receive: new client {key} created at {DateTime.Now:O}"); } catch { }
                     }
                 }
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine(e.ErrorCode);
+                Console.WriteLine(e.SocketErrorCode);
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
             }
             catch (Exception e){
                 
@@ -115,17 +225,80 @@ namespace ClientSocket.UDP
             }
             finally {
                     EndPoint ipEndPoint = new IPEndPoint(IPAddress.Any, 0);
-                socket.BeginReceiveFrom(buffer,
-                    0,
-                    buffer.Length,
-                    SocketFlags.None, 
-                    ref ipEndPoint,
-                    ReceiveCallBack,
-                    ipEndPoint);
+                    lock (socket)
+                    {
+                        socket.BeginReceiveFrom(buffer,
+                            0,
+                            buffer.Length,
+                            SocketFlags.None, 
+                            ref ipEndPoint,
+                            ReceiveCallBack,
+                            ipEndPoint);
+                    }
                 //try { Console.WriteLine($"UDPServer.Receive: packet from {(ipEndPoint as IPEndPoint).Address}:{(ipEndPoint as IPEndPoint).Port} length={Length} at {DateTime.Now:O}"); } catch { }
                    
             }
+        }
+        private void BuildClient(object obj)
+        {
+            try
+            {
+                
+            int nowIndex = 0;
+            int msgLength = 0;
+            int ID = 0;
+            long nowSeq = -1;
+            int chacheNum = 0;
+            (byte[] bytes, int len,string key) info = ((byte[] bytes, int len,string key))obj;
             
+            byte[] chacheBytes = info.bytes;
+            chacheNum = info.len;
+            string key = info.key;
+            int type = -1;
+            msgLength = -1;
+            if (chacheNum >= 2)
+            {
+                if (chacheBytes.Length>=sizeof(short))
+                {
+                    type = BitConverter.ToInt16(chacheBytes, nowIndex);
+                    nowIndex += 2;
+                }
+                ID = BitConverter.ToInt32(chacheBytes, nowIndex);
+                nowIndex += 4;
+                msgLength = BitConverter.ToInt32(chacheBytes, nowIndex);
+                nowIndex += 4;
+
+                if (chacheNum - nowIndex >= msgLength && msgLength != -1)
+                {
+                    BaseMsg baseMsg = null;
+                    baseMsg = MsgPool.Instance.GetMsg(ID);
+                    if (baseMsg != null)
+                    {
+                        baseMsg.Reading(chacheBytes, nowIndex);
+                        BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
+                        baseHandler.msg = baseMsg;
+                        if (baseMsg is UdpPlayerAddMsg)
+                        {
+                            UdpPlayerAddMsg playerAddMsg= baseMsg as UdpPlayerAddMsg;
+                            ClientDic.AddClient(key,playerAddMsg.playerId);
+                            Console.WriteLine("玩家成功加入UDP" + playerAddMsg.playerId);
+                            UDPConnectionBuildMsg msg = new UDPConnectionBuildMsg();
+                            msg.DelayBufferFrame = MainClass.frameManager.DelayBufferFrames;
+                            msg.ServerLogicFrame = MainClass.frameManager.ReadLogicFrame();
+                            MainClass.udpserver.SendMessage(msg,
+                               GetIPEndPointFromClientDic(key),
+                                E_UDP_MSG_TYPE.SIMPLE);
+                        }
+                    }
+                }
+            }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                Console.WriteLine(e.StackTrace);
+                throw;
+            }
         }
         public void DoProcess(object obj)
         {
@@ -136,8 +309,6 @@ namespace ClientSocket.UDP
                     ShareinputsEach();
                     DoReceive();
                     // allow other threads to run and avoid tight busy-looping
-                    
-                    
                 }
             }
             catch (Exception e)
@@ -243,10 +414,10 @@ namespace ClientSocket.UDP
         #endregion
         private void ShareInputs()
         {
-            try {
-                lock (UDP_Client_Dic)
-                {
-                    foreach (var item in UDP_Client_Dic)
+            try
+            {
+                    var clientDic=  ClientDic.GetClients();
+                    foreach (var item in clientDic)
                     {
                         string strID = item.Key;
   
@@ -285,15 +456,10 @@ namespace ClientSocket.UDP
                         
                         foreach (var item1 in keysToRemove)
                         {
-                          
                                item.Value.inputsDic.TryRemove(item1,out _);
-                            
-                            
                         }
 
                     }
-                }
-
             }
             catch (Exception e)
             {
@@ -338,6 +504,7 @@ namespace ClientSocket.UDP
                             default:
                                 break;
                         }
+                        lock(socket)
                         socket.SendTo(buff, iPEnd);
                     
                 }
@@ -363,45 +530,49 @@ namespace ClientSocket.UDP
            
             if (bytes != null)
             {
-                Dictionary<string, UDPClient> newDIc = UDP_Client_Dic;
-                foreach (var item in newDIc)
+                Dictionary<string, UDPClient> newDIc = ClientDic.GetClients();
+                lock (socket)
                 {
+                    foreach (var item in newDIc)
+                    {
                     
-                       socket.BeginSendTo(bytes, 
-                           0, 
-                           bytes.Length,
-                           SocketFlags.None, 
-                           GetIPEndPointFromClientDic(item.Key), 
-                           SendCallBack, socket);
+                        socket.BeginSendTo(bytes, 
+                            0, 
+                            bytes.Length,
+                            SocketFlags.None, 
+                            GetIPEndPointFromClientDic(item.Key), 
+                            SendCallBack, socket);
                     
                         
-                    #region 废弃的超时重发机制
-                    //lock (AckDic)
-                    //{
-                    //    if (!AckDic.ContainsKey(nowsequence))
-                    //    {
-                    //        Dictionary<string, AckPackage> dic = new Dictionary<string, AckPackage>();
-                    //        dic.Add(item.Key,new AckPackage(baseMsg));
-                    //        AckDic.Add(nowsequence, dic);
-                    //    }
-                    //    else if (AckDic.ContainsKey(nowsequence))
-                    //    {
-                    //        if (AckDic[nowsequence].ContainsKey(item.Key))
-                    //        {
-                    //            AckDic[nowsequence][item.Key] = new AckPackage(baseMsg);
-                    //        }
-                    //        else
-                    //        {
-                    //            AckDic[nowsequence].Add(item.Key, new AckPackage(baseMsg));
-                    //        }
-                    //    }
-                    //}
-                    #endregion
+                        #region 废弃的超时重发机制
+                        //lock (AckDic)
+                        //{
+                        //    if (!AckDic.ContainsKey(nowsequence))
+                        //    {
+                        //        Dictionary<string, AckPackage> dic = new Dictionary<string, AckPackage>();
+                        //        dic.Add(item.Key,new AckPackage(baseMsg));
+                        //        AckDic.Add(nowsequence, dic);
+                        //    }
+                        //    else if (AckDic.ContainsKey(nowsequence))
+                        //    {
+                        //        if (AckDic[nowsequence].ContainsKey(item.Key))
+                        //        {
+                        //            AckDic[nowsequence][item.Key] = new AckPackage(baseMsg);
+                        //        }
+                        //        else
+                        //        {
+                        //            AckDic[nowsequence].Add(item.Key, new AckPackage(baseMsg));
+                        //        }
+                        //    }
+                        //}
+                        #endregion
+                    }
                 }
             }
         }
         private void SendCallBack(IAsyncResult ar)
         {
+            lock(socket)
             ((Socket)ar.AsyncState).EndSendTo(ar);
         }
         public void AddSimpleHeadToData(ref byte[] bytes)

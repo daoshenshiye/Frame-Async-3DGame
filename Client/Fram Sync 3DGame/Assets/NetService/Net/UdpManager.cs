@@ -54,8 +54,11 @@ public class UdpManager: MonoBehaviour
     private List<DataPackage> WillAddBuff = new List<DataPackage>();
     private long preLogicFrame =-1;
     private float timer;
-    public int Counter;
     private byte[] bytes = new byte[8192];
+    private Thread SendTread;
+    private Thread steadyThread;
+    private Thread ReceiveTread;
+    private Thread HandleBusinessThread;
     private void Awake()
     {
             instance = this;
@@ -67,16 +70,24 @@ public class UdpManager: MonoBehaviour
         if (socket != null) return;
 
         socket = new Socket(AddressFamily.InterNetwork,SocketType.Dgram,ProtocolType.Udp);
-        socket.Bind(new IPEndPoint(IPAddress.Any,8500));
+        socket.Bind(new IPEndPoint(IPAddress.Any,0));
         shouldOpenUdp=true;
+        steadyThread=new Thread(SendSteadyMsg);
+        steadyThread.Start();
+        SendTread = new Thread(SendSimpleMsg);
+        SendTread.Start();
+        ReceiveTread = new Thread(UDPReceive);
+        ReceiveTread.Start();
+        HandleBusinessThread = new Thread(HandleBusinessLogic);
+        HandleBusinessThread.Start();
+        
+    }
 
-        ThreadPool.QueueUserWorkItem(SendSteadyMsg);
-        ThreadPool.QueueUserWorkItem(SendSimpleMsg);
-        ThreadPool.QueueUserWorkItem(UDPReceive);
-        ThreadPool.QueueUserWorkItem(HandleBusinessLogic);
+    public void StartUdpHeartMsgLoop()
+    {
         InvokeRepeating("SendHeartMsg", 0, 1);
     }
-    public void SendHeartMsg()
+    private void SendHeartMsg()
     {
         if (socket == null) return;
         UDPSend(new HeartMsg(),E_UDP_MSG_TYPE.SIMPLE);
@@ -122,7 +133,7 @@ public class UdpManager: MonoBehaviour
             }
             catch (Exception e) {
 
-                print(e.Message);
+                Debug.LogError(e.Message);
             }
 
         }
@@ -165,6 +176,8 @@ public class UdpManager: MonoBehaviour
     private void UDPReceive(object obj)
     {
         
+        try
+        {
             while (shouldOpenUdp)
             {
                 int Length = socket.ReceiveFrom(bytes, ref remoteEndPoint);
@@ -175,11 +188,20 @@ public class UdpManager: MonoBehaviour
                 }
 
             }
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e.Message);
+            Debug.Log(e.StackTrace);
+        }
+        
     }
 
     public void HandleReceive(int receiveLength, byte[] bytes)
     {
-        int nowIndex = 0;
+        try
+        {
+              int nowIndex = 0;
         int msgLength = 0;
         int ID = 0;
         long nowSeq = -1;
@@ -187,8 +209,6 @@ public class UdpManager: MonoBehaviour
 
         byte[] chacheBytes = bytes;
         chacheNum = receiveLength;
-
- 
             int type = -1;
             if (chacheBytes.Length>=sizeof(short))
             {
@@ -229,12 +249,10 @@ public class UdpManager: MonoBehaviour
                         {
                             print("收到了RTT消息");
                         }
+
                         if (type == 0)
                         {
-
-
                             SimpleMsgQueue.Enqueue(baseHandler);
-
                         }
                         else if (type == 1)
                         {
@@ -263,6 +281,12 @@ public class UdpManager: MonoBehaviour
 
                 }
             }
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e.Message);
+            Debug.Log(e.StackTrace);
+        }
     }
     public void HandleBusinessLogic(object obj)
     {
@@ -278,7 +302,6 @@ public class UdpManager: MonoBehaviour
                     {
                         handler.HandlerDo();
                     }
-                  
                 }
                 if (UdpManager.Instance.SimpleMsgQueue.TryDequeue(out BaseHandler handler1))
                 {
@@ -463,17 +486,23 @@ public class UdpManager: MonoBehaviour
     
 
     #endregion
-  
 
-
-    private void OnDestroy()
+    private void Close()
     {
-       if(socket!=null)
+        if (socket != null)
         {
             socket.Shutdown(SocketShutdown.Both);
             socket.Close();
-            shouldOpenUdp = false;
-            StopAllCoroutines();
         }
+       
+    }
+
+    private void OnDestroy()
+    {
+        print("调用了摧毁UDP");
+        Close();
+        shouldOpenUdp = false;
+        StopAllCoroutines();
+        
     }
 }

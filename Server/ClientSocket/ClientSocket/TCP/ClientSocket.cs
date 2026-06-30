@@ -9,31 +9,13 @@ using NetService.Net;
 
 namespace ClientSocket.TCP
 {
-    public class ChacheReceive {
-    public byte[] chacheBytes;
-        public int chacheNum;
-        public ChacheReceive()
-        {
-            chacheBytes=new byte[100];
-            chacheNum=0;
-        }
-        public ChacheReceive(byte[] bytes,int num)
-        {
-            chacheBytes=bytes;
-            chacheNum=num;
-        }
-    }
-
     public class ClientSocket
     {
         public int ID;
-        
-        private byte[] chacheBytes = new byte[1024*5];
-        private List<ChacheReceive> chacheReceives= new List<ChacheReceive>();
         private int chacheNum;
         private static int Begin_ID=0;
         private Socket socket;
-        private bool isConnected=>socket.Connected;
+        public bool isConnected=>socket.Connected;
         private  long preTime=-1;
         private static long TimeOutTime = 20;
         private bool shouldRun=false;
@@ -77,7 +59,6 @@ namespace ClientSocket.TCP
             {
                 try
                 {
-
                     byte[] bytes = new byte[1024*5];
                     int Length = socket.Receive(bytes);
                     if (Length <= 0)

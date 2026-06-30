@@ -116,15 +116,16 @@ public class LogicViewBridge
         {
             LogicAndView logv= GetPlayerLogicAndView(v.playerId);
             
-                
             if (logv != null)
             {
                 var ServerPos=new Vector3(v.playerstate.playerPos.x,v.playerstate.playerPos.y,v.playerstate.playerPos.z);
                 logv.view.HP = v.playerstate.hp;
                 logv.logic.LogicPos =ServerPos;
+                if (ServerPos!=Vector3.zero)
+                {
+                    Debug.Log("玩家移动了");
+                }
             }       
-            
-         
         }
     }
     

@@ -6,28 +6,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NetService.Net;
 using UnityEngine;
 using UnityEngine.UI;
-// public class ChacheReceive
-// {
-//     public byte[] chacheBytes;
-//     public int chacheNum;
-//     public ChacheReceive()
-//     {
-//         chacheBytes = new byte[100];
-//         chacheNum = 0;
-//     }
-//     public ChacheReceive(byte[] bytes, int num)
-//     {
-//         chacheBytes = bytes;
-//         chacheNum = num;
-//
-//     }
-// }
 public class TCPManager: MonoBehaviour 
 {
     private static TCPManager instance;
@@ -65,6 +50,7 @@ public class TCPManager: MonoBehaviour
         set
         {
             buildTCPConnection = value;
+            Debug.Log("buildConnectionSetted");
         }
     }
     private float SEND_HEART_MSG_TIME = 5f;
@@ -85,6 +71,10 @@ public class TCPManager: MonoBehaviour
         _msgReceiveHandler.OnMessageParsed = ProcessMsg;
         instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    public void StartSendTcpHeartLoop()
+    {
         InvokeRepeating("SendHeartMsg", 0, SEND_HEART_MSG_TIME);
     }
     private void SendHeartMsg()
@@ -122,7 +112,11 @@ public class TCPManager: MonoBehaviour
         }
 
         try
-        {       
+        {
+            if (buildTCPConnection)
+            {
+                return;
+            }
             ConnectTask = socket.ConnectAsync(ip, port);
             if (await Task.WhenAny(ConnectTask, Task.Delay(WaitClientConnection_MS, token)) != ConnectTask)
             {
@@ -202,12 +196,9 @@ public class TCPManager: MonoBehaviour
             }
             if (!isConnected)
             {
-                await SafeClose();
-                _ = ConnectWith(ip, port);
-                return;
+                break;
             }
         }
-
         Debug.LogWarning($"业务握手超时{waitMs}ms，断开重连");
         await Task.Delay(RetryDelay_MS);
         if (buildTCPConnection)
@@ -280,17 +271,14 @@ public class TCPManager: MonoBehaviour
         SendThread = null;
         if (socket != null)
         {
-            try
+         
+            if (isConnected)
             {
-                if (isConnected)
-                {
-                    QuitMessage quit = new QuitMessage();
-                    socket.Send(quit.Writting());
-                    socket.Shutdown(SocketShutdown.Both);
-                    socket.Close();
-                }
+                QuitMessage quit = new QuitMessage();
+                socket.Send(quit.Writting());
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Close();
             }
-            catch { }
             socket = null;
         }
         _msgReceiveHandler.ResetReadIndex();

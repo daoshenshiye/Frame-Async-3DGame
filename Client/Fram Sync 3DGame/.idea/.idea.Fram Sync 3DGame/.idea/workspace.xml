@@ -11,20 +11,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c09224f6-7251-41ed-8a83-2bac6e4f1336" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/Assets/NetService/Net/MsgReceiveHandler.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/NetService/Net/MsgReceiveHandler.cs.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/MsgReceiveHandler.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/FrameManager/PlayerInputHandler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Fram Sync 3DGame/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Fram Sync 3DGame/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Manager/PlayerManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Manager/PlayerManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Bridge/LogicViewBridge.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Bridge/LogicViewBridge.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Manager/FrameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/LogicAndView/Manager/FrameManager.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/NetService/Net/Main.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/Net/Main.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/NetService/Net/TCPManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/Net/TCPManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/NetService/Net/UdpManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/Net/UdpManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/NetService/UI/ShowTransfrom.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/NetService/UI/ShowTransfrom.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/PlayerAccessInfoMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/PlayerAccessInfoMsgHandler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/PlayerCharacterCreateMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/PlayerCharacterCreateMsgHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/UdpPlayerAddMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameMessage/Handler/UdpPlayerAddMsgHandler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/TCPConnectionBuildMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/TCPConnectionBuildMsgHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UDPConnectionBuildMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UDPConnectionBuildMsgHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UdpAckMsgHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Script/ProtocolGenerate/GameSystem/Handler/UdpAckMsgHandler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-2022.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-2022.dwlt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/FrameManager/FrameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/FrameManager/FrameManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Main.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Main.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Handler/InputMessageHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Msg/ProtocolGenerate/GameMessage/Handler/InputMessageHandler.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/ClientSocket.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/ClientSocket.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/ServerSocket.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/TCP/ServerSocket.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Tools/Vector3.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/Tools/Vector3.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPClient.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPServer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/UDP/UDPServer.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.dll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../../Server/ClientSocket/ClientSocket/bin/Debug/net10.0/ClientSocket.exe" afterDir="false" />
     </list>
@@ -84,6 +93,7 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5a41d6b7189842eca409fd0b1c3e3dcf17bf78/ae/c22af504/Stopwatch.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/6db90f4241f34718aade286911577a8a284800/d6/e59d8d6e/Socket.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/ca7b32b31189438bab0ba6f61815e95f1fe00/fc/c251b08d/Collision.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/d86a5fed9f9f4388a980c1c27ed40339961400/d0/be4f9a82/PhysicsDebugDraw.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/8a522b806eac9bb894e6e4c5fe87f353457535e769447e79c6b396beecb5d0/System.Threading.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/NetService/Net/MsgReceiveHandler.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/NetService/Net/UdpManager.cs" root0="FORCE_HIGHLIGHTING" />
@@ -97,6 +107,9 @@
     <urls />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="PerforceDirect.Settings">
+    <option name="CHARSET" value="无" />
+  </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="SWEA" />
   </component>
@@ -111,6 +124,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Attach to Unity Editor.附加到 Unity 编辑器.executor&quot;: &quot;Debug&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
@@ -128,12 +142,13 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;RiderCSharpLiveTemplatesSettingsId&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
     &quot;独立播放器.启动 Unity.executor&quot;: &quot;Debug&quot;,
     &quot;附加到 Unity 编辑器.附加到 Unity 编辑器.executor&quot;: &quot;Debug&quot;
   }
 }</component>
-  <component name="RunManager" selected="附加到 Unity 编辑器.附加到 Unity 编辑器">
+  <component name="RunManager" selected="Attach to Unity Editor.附加到 Unity 编辑器">
     <configuration name="启动 Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="D:\tools2\unity\unity editor\2022.3.62f2c1\Editor\Unity.exe" />
       <option name="PROGRAM_PARAMETERS" value="-projectPath &quot;D:\unity-Git\Frame Async 3DGame\Frame Async 3DGame\Client\Fram Sync 3DGame&quot; -debugCodeOptimization" />
@@ -154,6 +169,36 @@
       <option name="MIXED_MODE_DEBUG" value="0" />
       <method v="2" />
     </configuration>
+    <configuration name="Standalone Player" type="RunUnityExe" factoryName="Unity Executable">
+      <option name="EXE_PATH" value="$PROJECT_DIR$/../../../../../unity_builds/新建文件夹\Fram Sync 3DGame.exe" />
+      <option name="PROGRAM_PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="D:\unity_builds\新建文件夹" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="ENV_FILE_PATHS" value="" />
+      <option name="REDIRECT_INPUT_PATH" value="" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
+      <option name="EXE_PATH" value="D:\tools2\unity\unity editor\2022.3.62f2c1\Editor\Unity.exe" />
+      <option name="PROGRAM_PARAMETERS" value="-projectPath &quot;D:\unity-Git\Frame Async 3DGame\Frame Async 3DGame\Client\Fram Sync 3DGame&quot; -debugCodeOptimization" />
+      <option name="WORKING_DIRECTORY" value="D:\unity-Git\Frame Async 3DGame\Frame Async 3DGame\Client\Fram Sync 3DGame" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="ENV_FILE_PATHS" value="" />
+      <option name="REDIRECT_INPUT_PATH" value="" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unit Tests (batch mode)" type="RunUnityExe" factoryName="Unity Executable">
+      <option name="EXE_PATH" value="D:\tools2\unity\unity editor\2022.3.62f2c1\Editor\Unity.exe" />
+      <option name="PROGRAM_PARAMETERS" value="-runTests -batchmode -projectPath &quot;D:\unity-Git\Frame Async 3DGame\Frame Async 3DGame\Client\Fram Sync 3DGame&quot; -testResults Logs/results.xml -logFile Logs/Editor.log -testPlatform EditMode -debugCodeOptimization" />
+      <option name="WORKING_DIRECTORY" value="D:\unity-Git\Frame Async 3DGame\Frame Async 3DGame\Client\Fram Sync 3DGame" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="ENV_FILE_PATHS" value="" />
+      <option name="REDIRECT_INPUT_PATH" value="" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
+      <method v="2" />
+    </configuration>
     <configuration name="单元测试(批处理模式)" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="D:\tools2\unity\unity editor\2022.3.62f2c1\Editor\Unity.exe" />
       <option name="PROGRAM_PARAMETERS" value="-runTests -batchmode -projectPath &quot;D:\unity-Git\Frame Async 3DGame\Frame Async 3DGame\Client\Fram Sync 3DGame&quot; -testResults Logs/results.xml -logFile Logs/Editor.log -testPlatform EditMode -debugCodeOptimization" />
@@ -164,15 +209,28 @@
       <option name="MIXED_MODE_DEBUG" value="0" />
       <method v="2" />
     </configuration>
-    <configuration name="附加到 Unity 编辑器" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" useMixedMode="false" ignored-value-for-modified-check="31312">
+    <configuration name="附加到 Unity 编辑器" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" useMixedMode="false" ignored-value-for-modified-check="19360">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="31312" />
+      <option name="pid" value="19360" />
       <option name="projectPathOnTarget" />
       <option name="runtimes">
         <list>
           <MonoRuntime />
         </list>
+      </option>
+      <option name="selectedOptions">
+        <list />
+      </option>
+      <method v="2" />
+    </configuration>
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" useMixedMode="false">
+      <option name="allowRunningInParallel" value="false" />
+      <option name="listenPortForConnections" value="false" />
+      <option name="pid" />
+      <option name="projectPathOnTarget" />
+      <option name="runtimes">
+        <list />
       </option>
       <option name="selectedOptions">
         <list />
@@ -207,6 +265,9 @@
       <workItem from="1780812241750" duration="3446000" />
       <workItem from="1782545111927" duration="30827000" />
       <workItem from="1782645060828" duration="1645000" />
+      <workItem from="1782718257945" duration="7877000" />
+      <workItem from="1782749430865" duration="5409000" />
+      <workItem from="1782801553908" duration="12047000" />
     </task>
     <servers />
   </component>
@@ -227,20 +288,35 @@
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+        <breakpoint type="DotNet_Exception_Breakpoints">
           <properties exception="System.OperationCanceledException" breakIfHandledByOtherCode="false" displayValue="System.OperationCanceledException" />
           <option name="timeStamp" value="1" />
         </breakpoint>
-        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+        <breakpoint type="DotNet_Exception_Breakpoints">
           <properties exception="System.Threading.Tasks.TaskCanceledException" breakIfHandledByOtherCode="false" displayValue="System.Threading.Tasks.TaskCanceledException" />
           <option name="timeStamp" value="2" />
         </breakpoint>
-        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+        <breakpoint type="DotNet_Exception_Breakpoints">
           <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
           <option name="timeStamp" value="3" />
         </breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="DotNet_Exception_Breakpoints">
+          <properties displayValue="任何异常" />
+        </breakpoint>
+      </default-breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="UNITY_DEBUG_RUN_CONFIGURATION">
+        <watch expression="buildTCPConnection" language="C#" custom="1" />
+        <watch expression="BuildTCPConnection" language="C#" custom="3" />
+      </configuration>
+    </watches-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

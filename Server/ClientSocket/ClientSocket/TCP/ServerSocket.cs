@@ -19,7 +19,6 @@ namespace ClientSocket.TCP
     {
         private string ip;
         private int port;
-        private Socket socket;
         private  ConcurrentDictionary<int,ClientSocket> clientSockets;
         private Dictionary<int, Dictionary<int, ClientSocket>> rooms;
         private List<ClientSocket> DelClientSockets;
@@ -36,49 +35,70 @@ namespace ClientSocket.TCP
             AcceptThread = new Thread(Accept);
             AcceptThread.Start();
         }
-        public void Accept( object obj)
+        public void Accept()
         {
-            try
-            {
-                socket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
-                //socket.Bind(new IPEndPoint(IPAddress.Parse(ip),port));
-                socket.Bind(new IPEndPoint(IPAddress.Parse(ip), port));
-                socket.Listen(512);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return;
-            }
             while (ShouldOpenThread)
             {
+                Socket listenSocket = null;
                 try
                 {
-                     Socket client= socket.Accept();
-                    Console.WriteLine("客户端接入，远端：" + client.RemoteEndPoint);
-                    ClientSocket clientSocket = new ClientSocket(client);
-                    clientSockets.GetOrAdd(clientSocket.ID, clientSocket);
-                    Console.WriteLine("客户端" + clientSocket.ID + "接入");
-                    ThreadPool.QueueUserWorkItem((obj) =>
+                    listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    
+                    IPAddress bindAddr = ip == "0.0.0.0" ? IPAddress.Any : IPAddress.Parse(ip);
+                    IPEndPoint bindEp = new IPEndPoint(bindAddr, port);
+                    listenSocket.Bind(bindEp);
+                    listenSocket.Listen(512);
+                    Console.WriteLine($"服务端监听启动 {bindAddr}:{port}");
+                    
+                    while (ShouldOpenThread)
                     {
-                        TCPConnectionBuildMsg tcpConnect = new TCPConnectionBuildMsg();
-                        clientSocket.SendMessage(tcpConnect);
-                        
-                        PlayerAccessInfoMsg playerAccess = new PlayerAccessInfoMsg();
-                        playerAccess.PlayerId = clientSocket.ID;
-                        playerAccess.PlayerNickName = "saberalter";
-                        playerAccess.username = "saber";
-                        playerAccess.password = "alter";
-                        clientSocket.SendMessage(playerAccess);
+                        IAsyncResult ar = listenSocket.BeginAccept(null, null);
                        
-                    });
+                        if (!ar.AsyncWaitHandle.WaitOne(100))
+                        {
+                            continue;
+                        }
+                        // 拿到客户端连接
+                        Socket client = listenSocket.EndAccept(ar);
+                        Console.WriteLine("客户端接入，远端：" + client.RemoteEndPoint);
+                        ClientSocket clientSocket = new ClientSocket(client);
+                        clientSockets.GetOrAdd(clientSocket.ID, clientSocket);
+                        Console.WriteLine("客户端" + clientSocket.ID + "接入");
+
+                       
+                        ThreadPool.QueueUserWorkItem(_ =>
+                        {
+                            try
+                            {
+                                if (!clientSocket.isConnected) return;
+                                TCPConnectionBuildMsg tcpConnect = new TCPConnectionBuildMsg();
+                                clientSocket.SendMessage(tcpConnect);
+                                PlayerAccessInfoMsg playerAccess = new PlayerAccessInfoMsg();
+                                playerAccess.PlayerId = clientSocket.ID;
+                                playerAccess.PlayerNickName = "saberalter";
+                                playerAccess.username = "saber";
+                                playerAccess.password = "alter";
+                                clientSocket.SendMessage(playerAccess);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"下发初始消息失败：{ex.Message}");
+                            }
+                        });
+                    }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
-                  Console.WriteLine(e.Message);
-                  Console.WriteLine(e.StackTrace);
+                    Console.WriteLine($"监听异常，3秒后重启监听：{e.Message}");
                 }
+                finally
+                {
+                    listenSocket?.Close();
+                    listenSocket = null;
+                }
+                Thread.Sleep(3000);
             }
+            Console.WriteLine("监听线程完全退出");
         }
        
         public void CraeteRoom(int roomId,int playerId)
@@ -326,11 +346,8 @@ namespace ClientSocket.TCP
                 for (int i = 0; i < clientSockets.Count; i++)
                 {
                     clientSockets[i].Close();
-
-
                 }
                 clientSockets.Clear();
-                socket.Close();
                 ShouldOpenThread = false;
             }
             catch (Exception e)
