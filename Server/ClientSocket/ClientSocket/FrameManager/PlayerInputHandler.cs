@@ -59,9 +59,10 @@ public class PlayerInputHandler
                     Console.WriteLine();
                     Console.WriteLine("============================================================");
                 }
-                
+
+                var ClientDic = MainClass.udpserver.ClientDic.GetClients();
                 // 补空输入：遍历所有在线玩家，没到齐的补空输入
-                foreach (var client in MainClass.udpserver.ClientDic.GetClients().Values)
+                foreach (var client in ClientDic.Values)
                 {
                     if (!frameInputs.ContainsKey(client.playerID) && client.playerID != -1)
                     {
@@ -133,7 +134,6 @@ public class PlayerInputHandler
             
             playerStateData.playerPos = beginPos.ToPlayerPosData();
             playerStateAndInput.playerstate = playerStateData;
-            Vector3 BoxColliderSize;
             Player player = PlayerManager.Instance.GetPlayer(msg.playerId);
             if (player!=null)
             {

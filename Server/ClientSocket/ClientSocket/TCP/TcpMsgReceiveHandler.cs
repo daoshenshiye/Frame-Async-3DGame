@@ -3,14 +3,14 @@ using GameMsg;
 
 namespace NetService.Net
 {
-    public class MsgReceiveHandler
+    public class TcpMsgReceiveHandler
     {
         private  readonly object _receiveBufferLock = new object();
         private byte[] _receiveBuffer;
         private int _recvValidLen;
         public Action<BaseHandler> OnMessageParsed;
         
-        public MsgReceiveHandler(int lenth)
+        public TcpMsgReceiveHandler(int lenth)
         {
             _receiveBuffer=new byte[lenth];
         }
@@ -42,13 +42,11 @@ namespace NetService.Net
                     if (fullPackageLen > 1024 * 8)
                     {
                         Console.WriteLine("收到超大非法数据包，清空缓冲区");
-                        lock (_receiveBuffer) _recvValidLen = 0;
+                        _recvValidLen = 0;
                         break;
                     }
-                    if (fullPackageLen>_receiveBuffer.Length)
-                    {
+                    if (_recvValidLen < fullPackageLen)
                         break;
-                    }
 
                    BaseMsg baseMsg= MsgPool.Instance.GetMsg(id);
                    if (baseMsg!=null)

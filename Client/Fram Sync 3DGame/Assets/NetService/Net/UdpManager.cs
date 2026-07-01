@@ -59,6 +59,7 @@ public class UdpManager: MonoBehaviour
     private Thread steadyThread;
     private Thread ReceiveTread;
     private Thread HandleBusinessThread;
+    private UdpMsgReceiveHandler receiveHandler;
     private void Awake()
     {
             instance = this;
@@ -80,7 +81,8 @@ public class UdpManager: MonoBehaviour
         ReceiveTread.Start();
         HandleBusinessThread = new Thread(HandleBusinessLogic);
         HandleBusinessThread.Start();
-        
+        receiveHandler = new UdpMsgReceiveHandler();
+        receiveHandler.OnCompleteReceive += OnProcessMsg;
     }
 
     public void StartUdpHeartMsgLoop()
@@ -201,91 +203,41 @@ public class UdpManager: MonoBehaviour
     {
         try
         {
-              int nowIndex = 0;
-        int msgLength = 0;
-        int ID = 0;
-        long nowSeq = -1;
-        int chacheNum = 0;
-
-        byte[] chacheBytes = bytes;
-        chacheNum = receiveLength;
-            int type = -1;
-            if (chacheBytes.Length>=sizeof(short))
-            {
-                type = BitConverter.ToInt16(chacheBytes, nowIndex);
-            }
-            else
-            {
-                return;
-            }
-           
-            nowIndex += 2;
-            msgLength = -1;
-            if (chacheNum >= 18 && type == 1 || chacheNum >= 10 && type == 0)
-            {
-                if (type == 1)
-                {
-                    nowSeq = BitConverter.ToInt64(chacheBytes, nowIndex);
-                    nowIndex += 8;
-                }
-
-                ID = BitConverter.ToInt32(chacheBytes, nowIndex);
-                nowIndex += 4;
-                msgLength = BitConverter.ToInt32(chacheBytes, nowIndex);
-                nowIndex += 4;
-
-                // print("ID:" + ID + "len" + msgLength+"nowSeq"+nowSeq);
-                if (chacheNum - nowIndex >= msgLength && msgLength != -1)
-                {
-                    BaseMsg baseMsg = null;
-                    baseMsg = MsgPool.Instance.GetMsg(ID);
-                    if (baseMsg != null)
-                    {
-
-                        baseMsg.Reading(chacheBytes, nowIndex);
-                        BaseHandler baseHandler = MsgPool.Instance.GetHandler(ID);
-                        baseHandler.msg = baseMsg;
-                        if (baseMsg.GetID() == 449)
-                        {
-                            print("收到了RTT消息");
-                        }
-
-                        if (type == 0)
-                        {
-                            SimpleMsgQueue.Enqueue(baseHandler);
-                        }
-                        else if (type == 1)
-                        {
-
-                            print("收到了消息");
-                            if (!MesgDic.ContainsKey(nowSeq))
-                            {
-                                lock (WillAddBuff)
-                                {
-
-                                    WillAddBuff.Add(new DataPackage(nowSeq, baseHandler));
-                                }
-
-                            }
-                            else
-                            {
-                                MesgDic[nowSeq] = baseHandler;
-                            }
-                            //UdpAckMsg msg = new UdpAckMsg();
-                            //msg.seq = nowSeq;
-                            //UDPSend(msg, E_UDP_MSG_TYPE.SIMPLE);
-                        }
-                    }
-
-                    nowIndex += msgLength;
-
-                }
-            }
+            receiveHandler.HandleMsg(bytes, receiveLength); 
         }
         catch (Exception e)
         {
             Debug.Log(e.Message);
             Debug.Log(e.StackTrace);
+        }
+    }
+
+    public void OnProcessMsg(short type,long nowSeq,BaseHandler baseHandler)
+    {
+        if (type == 0)
+        {
+            SimpleMsgQueue.Enqueue(baseHandler);
+        }
+        else if (type == 1)
+        {
+
+            print("收到了消息");
+            if (!MesgDic.ContainsKey(nowSeq))
+            {
+                lock (WillAddBuff)
+                {
+
+                    WillAddBuff.Add(new DataPackage(nowSeq, baseHandler));
+                }
+
+            }
+            else
+            {
+                MesgDic[nowSeq] = baseHandler;
+            }
+            //UdpAckMsg msg = new UdpAckMsg();
+            //msg.seq = nowSeq;
+            //UDPSend(msg, E_UDP_MSG_TYPE.SIMPLE);
         }
     }
     public void HandleBusinessLogic(object obj)

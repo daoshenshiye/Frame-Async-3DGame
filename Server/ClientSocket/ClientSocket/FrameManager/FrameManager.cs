@@ -21,13 +21,13 @@ public class FrameManager
     public int FixedFrameRate =15;
     public float FixedDeltaTime= 0;
     public  long CurrentLogicFrame;
-    private bool shouldOpenLogic;
     public int DelayBufferFrames = 4;
+    public  PlayerInputHandler PlayerInputHandler;
+    private bool shouldOpenLogic;
     private DateTime lastTime=DateTime.Now;
     private float MoveSpeed = 2f;
     private int timespan = 1000 / 15;
     private Thread frameThread;
-    public  PlayerInputHandler PlayerInputHandler;
     public FrameManager(int fixedFrameRate)
     {
         CurrentLogicFrame=DelayBufferFrames + 1;
@@ -62,16 +62,6 @@ public class FrameManager
                 var inputs = PlayerInputHandler.GetInputs();
                 // PhysicsWorld.Instance.Tick();
                 serverLogicFrame.ServerInputStateData = inputs.Count > 0 ? inputs : new List<ServerInputAndStateData>();
-                // if( inputs.Count > 0 )
-                // {
-                //     foreach (var input in inputs)
-                //     {
-                //         if (Vector3.FromPlayerPosData(input.playerstate.playerPos)!=Vector3.Zero)
-                //         {
-                //             Console.WriteLine("玩家移动数据已经算好");
-                //         }
-                //     }
-                // }
                 MainClass.udpserver.BroadCastMsg(serverLogicFrame, E_UDP_MSG_TYPE.ORDER_STEADY);
                 
                 List<long> removeList=new List<long>();

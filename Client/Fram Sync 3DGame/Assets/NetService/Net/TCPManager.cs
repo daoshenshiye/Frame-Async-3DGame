@@ -62,13 +62,13 @@ public class TCPManager: MonoBehaviour
     private Task ConnectTask;
     private Thread SendThread;
     private Thread ReceiveThread;
-    private MsgReceiveHandler _msgReceiveHandler;
+    private TcpMsgReceiveHandler _tcpMsgReceiveHandler;
     private CancellationTokenSource _handshakeCts;
     private readonly object _sendQueueLock = new object();
     private void Awake()
     {
-        _msgReceiveHandler=new  MsgReceiveHandler(1024*10);
-        _msgReceiveHandler.OnMessageParsed = ProcessMsg;
+        _tcpMsgReceiveHandler=new  TcpMsgReceiveHandler(1024*10);
+        _tcpMsgReceiveHandler.OnMessageParsed = ProcessMsg;
         instance = this;
         DontDestroyOnLoad(gameObject);
     }
@@ -281,7 +281,7 @@ public class TCPManager: MonoBehaviour
             }
             socket = null;
         }
-        _msgReceiveHandler.ResetReadIndex();
+        _tcpMsgReceiveHandler.ResetReadIndex();
     }
 
     private void ReceiveMesg()
@@ -331,9 +331,7 @@ public class TCPManager: MonoBehaviour
     }
     public void HandleReceive(byte[] bytes,int receiveLength)
     {
-        
-        
-        _msgReceiveHandler.HandleReceiveMsg(bytes, receiveLength);
+        _tcpMsgReceiveHandler.HandleReceiveMsg(bytes, receiveLength);
         
         #region 老版本的消息处理
         // try
@@ -521,6 +519,6 @@ public class TCPManager: MonoBehaviour
         _handshakeCts?.Dispose();
         _ = SafeClose();
         OpenThread = false;
-        _msgReceiveHandler = null;
+        _tcpMsgReceiveHandler = null;
     }
 }

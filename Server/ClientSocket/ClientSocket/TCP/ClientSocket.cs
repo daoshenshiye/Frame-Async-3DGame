@@ -20,11 +20,11 @@ namespace ClientSocket.TCP
         private static long TimeOutTime = 20;
         private bool shouldRun=false;
         private int Length;
-        private MsgReceiveHandler _msgReceiveHandler;
+        private TcpMsgReceiveHandler tcpMsgReceiveHandler;
        public ClientSocket(Socket socket)
        {
-           _msgReceiveHandler = new MsgReceiveHandler(1024 * 10);
-           _msgReceiveHandler.OnMessageParsed=ProcessParsedMessage;
+           tcpMsgReceiveHandler = new TcpMsgReceiveHandler(1024 * 10);
+           tcpMsgReceiveHandler.OnMessageParsed=ProcessParsedMessage;
             this.socket = socket;
             ID = Begin_ID;
             ++Begin_ID;
@@ -118,7 +118,7 @@ namespace ClientSocket.TCP
         }
         public void DoReceive(byte[] bytes, int receiveLength)
         {
-            _msgReceiveHandler.HandleReceiveMsg(bytes,receiveLength);
+            tcpMsgReceiveHandler.HandleReceiveMsg(bytes,receiveLength);
             #region 老版本的消息处理
 
                         // int nowindex = 0;
@@ -228,7 +228,7 @@ namespace ClientSocket.TCP
             {
                 if (socket != null)
                 {
-                    _msgReceiveHandler.ResetReadIndex();
+                    tcpMsgReceiveHandler.ResetReadIndex();
                     shouldRun = false;
                     socket.Shutdown(SocketShutdown.Both);
                     
